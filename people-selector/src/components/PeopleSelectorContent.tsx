@@ -1,9 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import Select from 'react-select';
 import BaseSelect from 'react-select';
 import SearchInput from './SearchInput';
 import MemberTable, { memberData } from './MemberTable';
 import { Member } from '../types/Member';
+import SearchDropdown from './SearchDropdown';
 
 // Tabs for the members view
 const tabs = [
@@ -148,14 +149,10 @@ const PeopleSelectorContent: React.FC = () => {
   const [selections, setSelections] = useState<Selection[]>([]);
   
   // Conditions state
-  const [conditions, setConditions] = useState<Condition[]>([
-    { 
-      id: 1,
-      field: 'department',
-      operator: 'is',
-      values: ['Product Management']
-    }
-  ]);
+  const [conditions, setConditions] = useState<Condition[]>([]);
+  
+  // Item conditions state
+  const [itemConditions, setItemConditions] = useState<Record<number, Condition[]>>({});
   
   // Exclusions state
   const [exclusions, setExclusions] = useState<ExclusionItem[]>([]);
@@ -175,6 +172,8 @@ const PeopleSelectorContent: React.FC = () => {
   const [exclusionSearchQuery, setExclusionSearchQuery] = useState('');
   const [showMemberSearchResults, setShowMemberSearchResults] = useState(false);
   const [showExclusionSearchResults, setShowExclusionSearchResults] = useState(false);
+  const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false);
+  const searchWrapperRef = useRef<HTMLDivElement>(null);
 
   // Create a local copy of member data with status
   const localMemberData: Member[] = useMemo(() => {
@@ -188,6 +187,14 @@ const PeopleSelectorContent: React.FC = () => {
   const peopleData = useMemo(() => {
     return updatePeopleDataCounts(localMemberData);
   }, [localMemberData]);
+  
+  // Prepare data for SearchDropdown
+  const dropdownPeople = useMemo(() => localMemberData.filter(
+      member => !selections.some(s => s.type === 'person' && s.id === member.id) && !exclusions.some(e => e.type === 'person' && e.id === member.id)
+    ), [localMemberData, selections, exclusions]);
+  const dropdownDepartments = useMemo(() => peopleData.filter(item => item.type === 'department' && !selections.some(s => s.type === 'department' && s.id === item.id)) as Item[], [peopleData, selections]);
+  const dropdownWorkplaces = useMemo(() => peopleData.filter(item => item.type === 'workplace' && !selections.some(s => s.type === 'workplace' && s.id === item.id)) as Item[], [peopleData, selections]);
+  const dropdownPositions = useMemo(() => peopleData.filter(item => item.type === 'position' && !selections.some(s => s.type === 'position' && s.id === item.id)) as Item[], [peopleData, selections]);
   
   // Update member search results with proper typing
   const memberSearchResults = useMemo(() => {
@@ -245,16 +252,24 @@ const PeopleSelectorContent: React.FC = () => {
     ];
   }, [memberSearchQuery, localMemberData, selections, peopleData]);
 
-  const handleAddSelection = (item: Selection) => {
-    if (!selections.some(s => s.id === item.id)) {
-      setSelections(prev => [...prev, item]);
-      // Remove from exclusions if present
-      if (exclusions.some(excl => excl.id === item.id)) {
-        setExclusions(prev => prev.filter(excl => excl.id !== item.id));
-      }
+  const handleAddSelection = (item: Selection | Member) => {
+    // Ensure the added item conforms to the Selection interface
+    const selectionToAdd: Selection = {
+      id: item.id,
+      // Determine type: if it's from Member, it's person, otherwise use its own type
+      type: 'name' in item && 'position' in item ? 'person' : (item as Selection).type,
+      name: item.name,
+      // Use position for person description, otherwise use item's description
+      description: 'position' in item ? item.position || 'No position' : (item as Selection).description,
+      avatar: 'avatar' in item ? item.avatar : undefined,
+      workplace: 'workplace' in item ? item.workplace : undefined
+    };
+
+    if (!selections.some(s => s.id === selectionToAdd.id && s.type === selectionToAdd.type)) {
+      setSelections(prev => [...prev, selectionToAdd]);
+      setMemberSearchQuery(''); // Clear search input
+      setIsSearchDropdownOpen(false); // Close dropdown
     }
-    setShowMemberSearchResults(false);
-    setMemberSearchQuery('');
   };
 
   // Add remove selection handler
@@ -263,69 +278,55 @@ const PeopleSelectorContent: React.FC = () => {
   };
 
   const renderMemberSearchResults = () => {
-    if (!memberSearchQuery || !showMemberSearchResults) return null;
-
-    const sections = [
-      { key: 'department' as const, title: 'Departments' },
-      { key: 'position' as const, title: 'Positions' },
-      { key: 'workplace' as const, title: 'Workplaces' },
-      { key: 'person' as const, title: 'People' }
-    ];
+    // THIS FUNCTION IS NO LONGER USED TO DISPLAY RESULTS FOR THE MAIN SEARCH INPUT
+    // It might still be used elsewhere, or can be removed if not.
+    // Kept temporarily for reference or if needed by exclusion search.
+    if (!showMemberSearchResults || memberSearchResults.length === 0) {
+      return null;
+    }
 
     return (
       <div className="absolute z-10 mt-1 bg-white rounded-md shadow-lg max-h-[400px] overflow-y-auto" style={{ width: 'calc(100% - 2rem)' }}>
-        {sections.map(section => {
-          const items = memberSearchResults.filter(item => item.type === section.key);
-          if (!items || items.length === 0) return null;
+        {memberSearchResults.map((item: SearchResultItem) => {
+          const selection: Selection = {
+            id: item.id,
+            type: item.type,
+            name: item.name,
+            description: item.description || 'No description',
+            avatar: item.avatar,
+            workplace: item.workplace
+          };
 
           return (
-            <div key={section.key} className="mb-4 p-2">
-              <h3 className="text-sm font-medium text-gray-700 mb-2">{section.title}</h3>
-              <div className="space-y-2">
-                {items.map((item: SearchResultItem) => {
-                  const selection: Selection = {
-                    id: item.id,
-                    type: item.type,
-                    name: item.name,
-                    description: item.description || 'No description',
-                    avatar: item.avatar,
-                    workplace: item.workplace
-                  };
-
-                  return (
-                    <div
-                      key={item.id}
-                      className="flex items-center justify-between p-2 hover:bg-gray-50 cursor-pointer rounded"
-                      onClick={() => handleAddSelection(selection)}
-                    >
-                      <div className="flex items-center">
-                        {item.type === 'person' && (
-                          <div className="mr-3">
-                            {item.avatar ? (
-                              <img 
-                                src={item.avatar} 
-                                alt={item.name} 
-                                className="w-8 h-8 rounded-full"
-                              />
-                            ) : (
-                              <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-                                {item.name.split(' ').map((n: string) => n[0]).join('')}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                        <div>
-                          <div className="font-medium">{item.name}</div>
-                          <div className="text-sm text-gray-500">{item.description}</div>
-                        </div>
+            <div
+              key={item.id}
+              className="flex items-center justify-between p-2 hover:bg-gray-50 cursor-pointer rounded"
+              onClick={() => handleAddSelection(selection)}
+            >
+              <div className="flex items-center">
+                {item.type === 'person' && (
+                  <div className="mr-3">
+                    {item.avatar ? (
+                      <img 
+                        src={item.avatar} 
+                        alt={item.name} 
+                        className="w-8 h-8 rounded-full"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                        {item.name.split(' ').map((n: string) => n[0]).join('')}
                       </div>
-                      {item.workplace && (
-                        <div className="text-sm text-gray-500">{item.workplace}</div>
-                      )}
-                    </div>
-                  );
-                })}
+                    )}
+                  </div>
+                )}
+                <div>
+                  <div className="font-medium">{item.name}</div>
+                  <div className="text-sm text-gray-500">{item.description}</div>
+                </div>
               </div>
+              {item.workplace && (
+                <div className="text-sm text-gray-500">{item.workplace}</div>
+              )}
             </div>
           );
         })}
@@ -367,9 +368,6 @@ const PeopleSelectorContent: React.FC = () => {
       }
     });
   };
-
-  // Move itemConditions state before its usage
-  const [itemConditions, setItemConditions] = useState<Record<number, Condition[]>>({});
 
   // Update the filterMembers function
   const filterMembers = useMemo(() => {
@@ -787,14 +785,23 @@ const PeopleSelectorContent: React.FC = () => {
             </p>
 
             {/* Search input */}
-            <div className="relative">
+            <div ref={searchWrapperRef} className="relative mb-4">
               <SearchInput
+                placeholder="Search or add people, departments, positions..."
                 value={memberSearchQuery}
                 onChange={(e) => setMemberSearchQuery(e.target.value)}
-                onFocus={() => setShowMemberSearchResults(true)}
-                placeholder="Add people, departments, teams, workplaces etc."
+                onFocus={() => setIsSearchDropdownOpen(true)}
               />
-              {renderMemberSearchResults()}
+              <SearchDropdown
+                isOpen={isSearchDropdownOpen}
+                onClose={() => setIsSearchDropdownOpen(false)}
+                people={dropdownPeople}
+                departments={dropdownDepartments}
+                workplaces={dropdownWorkplaces}
+                positions={dropdownPositions}
+                onItemSelect={handleAddSelection}
+                searchQuery={memberSearchQuery}
+              />
             </div>
 
             <div className="mt-4 space-y-2">
