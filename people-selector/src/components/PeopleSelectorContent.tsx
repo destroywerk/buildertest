@@ -452,48 +452,27 @@ const PeopleSelectorContent: React.FC = () => {
     }
   };
   
-  // Handle exclusion search
+  // Handle exclusion search - ONLY SEARCH PEOPLE
   const handleExclusionSearch = (query: string) => {
     setExclusionSearchQuery(query);
-    if (query.trim()) {
-      const searchTerm = query.toLowerCase();
-      const filtered = peopleData.filter(item => {
-        if (item.type !== 'person') {
-          return false;
-        }
-        
-        if (exclusions.some(excl => excl.id === item.id)) {
-          return false;
-        }
-        
-        const nameMatch = item.name.toLowerCase().includes(searchTerm);
-        const descriptionMatch = (item.description || '').toLowerCase().includes(searchTerm);
-        
-        return nameMatch || descriptionMatch;
-      });
-      setShowExclusionSearchResults(true);
-    } else {
-      const allPeople = peopleData
-        .filter(item => item.type === 'person')
-        .filter(item => !exclusions.some(excl => excl.id === item.id))
-        .sort((a, b) => a.name.localeCompare(b.name));
-      
-      setShowExclusionSearchResults(true);
-    }
+    setShowExclusionSearchResults(true);
+    // No need to filter here, the dropdown rendering will handle it
   };
   
-  // Add exclusion with proper typing
+  // Add exclusion - Ensure item is a person
   const addExclusion = (item: Item) => {
-    if (!exclusions.some(excl => excl.id === item.id)) {
+    // Only add if it's a person and not already excluded
+    if (item.type === 'person' && !exclusions.some(excl => excl.id === item.id)) {
       const newExclusion: ExclusionItem = {
         id: item.id,
-        type: item.type as 'person' | 'department' | 'position' | 'workplace',
+        type: 'person', // Explicitly set type to person
         name: item.name,
         description: item.description || 'No description',
         avatar: item.avatar,
-        workplace: item.workplace
+        workplace: item.workplace // Keep workplace if available
       };
       setExclusions([...exclusions, newExclusion]);
+      // Remove from selections if present (This part seems correct)
       if (selections.some(sel => sel.id === item.id)) {
         setSelections(selections.filter(sel => sel.id !== item.id));
       }
@@ -502,7 +481,7 @@ const PeopleSelectorContent: React.FC = () => {
     setShowExclusionSearchResults(false);
   };
   
-  // Remove exclusion
+  // Remove exclusion (This seems correct)
   const removeExclusion = (id: number) => {
     setExclusions(exclusions.filter(item => item.id !== id));
   };
@@ -846,105 +825,135 @@ const PeopleSelectorContent: React.FC = () => {
             {/* Exclusions section */}
             <div className="pt-6 border-t border-gray-200">
               <h2 className="text-base font-medium mb-1">Exclusions</h2>
-              <p className="text-sm text-gray-500 mb-4">Choose people or conditions who will be excluded from the above selection.</p>
+              <p className="text-sm text-gray-500 mb-4">Choose people who will be excluded from the above selection.</p>
               
+              {/* Input container for tokens and search field */}
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </div>
-                <div className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg bg-white focus-within:outline-none focus-within:ring-1 focus-within:ring-purple-200 focus-within:border-purple-200">
-                  <div className="flex items-center flex-wrap gap-2">
-                    {exclusions.map(item => (
-                      <div key={item.id} className="flex items-center bg-gray-100 rounded-md py-0.5 px-2">
-                        {item.avatar ? (
-                          <img 
-                            src={item.avatar} 
-                            alt={item.name} 
-                            className="w-8 h-8 rounded-full mr-1.5"
-                          />
-                        ) : (
-                          <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs mr-1.5">
-                            {item.name.split(' ').map(n => n[0]).join('')}
-                          </div>
-                        )}
-                        <span className="text-sm">{item.name}</span>
-                        <button 
-                          className="ml-1 text-gray-500 hover:text-red-600"
-                          onClick={() => removeExclusion(item.id)}
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                          </svg>
-                        </button>
-                      </div>
-                    ))}
-                    <input
-                      type="text"
-                      className="flex-1 min-w-[200px] text-gray-500 focus:outline-none"
-                      placeholder={exclusions.length === 0 ? "Search people to exclude" : ""}
-                      value={exclusionSearchQuery}
-                      onChange={(e) => handleExclusionSearch(e.target.value)}
-                      onFocus={() => {
-                        setShowExclusionSearchResults(true);
-                        handleExclusionSearch(''); // Show all people when focused
-                      }}
-                      onBlur={(e) => {
-                        // Check if the click is within the dropdown
-                        const relatedTarget = e.relatedTarget as HTMLElement;
-                        if (!relatedTarget?.closest('.exclusion-search-dropdown')) {
-                          setTimeout(() => {
-                            setShowExclusionSearchResults(false);
-                          }, 200);
-                        }
-                      }}
-                    />
-                  </div>
+                <div 
+                  className="flex flex-wrap items-center border border-gray-300 rounded-lg p-1 pl-2 bg-white min-h-[42px] focus-within:outline-none focus-within:ring-1 focus-within:ring-purple-200 focus-within:border-purple-200"
+                  onClick={() => document.getElementById('exclusion-search-input')?.focus()} // Focus input on container click
+                >
+                  {/* Render exclusion tokens */}
+                  {exclusions.map(item => (
+                    <div key={item.id} className="flex items-center bg-gray-100 rounded-md py-0.5 px-1.5 mr-1 mb-1">
+                      {item.avatar ? (
+                        <img 
+                          src={item.avatar} 
+                          alt={item.name} 
+                          className="w-5 h-5 rounded-full mr-1.5"
+                        />
+                      ) : (
+                        <div className="w-5 h-5 rounded-full bg-gray-300 flex items-center justify-center text-xs mr-1.5">
+                          {item.name.split(' ').map(n => n[0]).join('')}
+                        </div>
+                      )}
+                      <span className="text-sm mr-1">{item.name}</span>
+                      <button 
+                        type="button" // Prevent form submission if inside a form
+                        className="text-gray-500 hover:text-red-600 hover:bg-gray-200 rounded-full p-0.5"
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent focusing input
+                          removeExclusion(item.id);
+                        }}
+                        aria-label={`Remove ${item.name}`}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                  {/* Search Input Field */}
+                  <input
+                    id="exclusion-search-input"
+                    type="text"
+                    className="flex-1 min-w-[150px] text-sm text-gray-700 focus:outline-none py-1 px-1 my-0.5"
+                    placeholder={exclusions.length === 0 ? "Search people to exclude..." : ""}
+                    value={exclusionSearchQuery}
+                    onChange={(e) => handleExclusionSearch(e.target.value)}
+                    onFocus={() => {
+                      setShowExclusionSearchResults(true);
+                      // handleExclusionSearch(''); // Optional: Show all people when focused
+                    }}
+                    onBlur={() => {
+                      // Use timeout to allow click on dropdown items
+                      setTimeout(() => {
+                         // Check if the focus is moving to an element within the dropdown
+                         if (!document.activeElement?.closest('.exclusion-search-dropdown')) {
+                           setShowExclusionSearchResults(false);
+                         }
+                      }, 150); 
+                    }}
+                  />
                 </div>
 
-                {/* Exclusion search results dropdown */}
-                {showExclusionSearchResults && (
+                {/* Exclusion search results dropdown - ONLY SHOW PEOPLE */}
+                {showExclusionSearchResults && exclusionSearchQuery && (
                   <div 
                     className="exclusion-search-dropdown absolute z-10 mt-1 w-full bg-white shadow-lg rounded-lg border border-gray-200 max-h-[200px] overflow-y-auto"
-                    style={{ bottom: 'auto' }}
-                    onMouseDown={(e) => e.preventDefault()}
+                    // style={{ bottom: 'auto' }} // Removed this style if not needed
                   >
-                    {peopleData
-                      .filter(item => 
-                        item.type === 'person' && 
-                        !exclusions.some(excl => excl.id === item.id) &&
-                        (exclusionSearchQuery === '' || 
-                         item.name.toLowerCase().includes(exclusionSearchQuery.toLowerCase()) ||
-                         item.description.toLowerCase().includes(exclusionSearchQuery.toLowerCase()))
+                    {localMemberData // Search directly from localMemberData
+                      .filter(member => 
+                        // Must be a person
+                        // !exclusions.some(excl => excl.id === member.id) && // Already excluded check
+                        ( // Match query
+                          member.name.toLowerCase().includes(exclusionSearchQuery.toLowerCase()) ||
+                          member.position?.toLowerCase().includes(exclusionSearchQuery.toLowerCase()) ||
+                          member.department?.toLowerCase().includes(exclusionSearchQuery.toLowerCase()) ||
+                          member.workplace?.toLowerCase().includes(exclusionSearchQuery.toLowerCase())
+                        )
                       )
                       .sort((a, b) => a.name.localeCompare(b.name))
-                      .map(result => {
-                        const typedResult = result as Item;
+                      .slice(0, 20) // Limit results for performance
+                      .map(member => {
+                        // Convert member to Item for the addExclusion function
+                        const itemResult: Item = {
+                            id: member.id,
+                            type: 'person',
+                            name: member.name,
+                            description: member.position || 'No position',
+                            avatar: member.avatar,
+                            workplace: member.workplace
+                        };
+                        // Don't show if already excluded
+                        if (exclusions.some(excl => excl.id === member.id)) return null;
+                        
                         return (
                           <div 
-                            key={typedResult.id}
+                            key={itemResult.id}
                             className="px-4 py-2 hover:bg-gray-50 cursor-pointer flex items-center"
-                            onClick={() => addExclusion(typedResult)}
+                            onMouseDown={(e) => { // Use onMouseDown to prevent input blur before click
+                                e.preventDefault();
+                                addExclusion(itemResult);
+                            }}
                           >
-                            {typedResult.avatar ? (
+                            {itemResult.avatar ? (
                               <img 
-                                src={typedResult.avatar} 
-                                alt={typedResult.name} 
+                                src={itemResult.avatar} 
+                                alt={itemResult.name} 
                                 className="w-8 h-8 rounded-full object-cover mr-3"
                               />
                             ) : (
-                              <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-800 mr-3">
-                                {typedResult.name.split(' ').map((n: string) => n[0]).join('')}
+                              <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs mr-3">
+                                {itemResult.name.split(' ').map((n: string) => n[0]).join('')}
                               </div>
                             )}
                             <div>
-                              <div className="font-medium">{typedResult.name}</div>
-                              <div className="text-sm text-gray-500">{typedResult.description}</div>
+                              <div className="font-medium">{itemResult.name}</div>
+                              <div className="text-sm text-gray-500">{itemResult.description}</div>
                             </div>
                           </div>
                         );
                       })}
+                      {/* Optional: Add a message if no results found */}
+                      {localMemberData.filter(member => 
+                         !exclusions.some(excl => excl.id === member.id) &&
+                         (member.name.toLowerCase().includes(exclusionSearchQuery.toLowerCase()) ||
+                          member.position?.toLowerCase().includes(exclusionSearchQuery.toLowerCase()))
+                       ).length === 0 && (
+                         <div className="px-4 py-2 text-sm text-gray-500">No people found</div>
+                      )}
                   </div>
                 )}
               </div>
@@ -1054,28 +1063,21 @@ const PeopleSelectorContent: React.FC = () => {
         <div className="overflow-y-auto" style={{ height: 'calc(100% - 87px)' }}>
           <MemberTable 
             activeTab={activeTab} 
+            // Ensure onExclude passes the correct Item structure
             onExclude={(member: Item) => {
-              const exclusionItem: ExclusionItem = {
-                id: member.id,
-                type: member.type as 'person' | 'department' | 'position' | 'workplace',
-                name: member.name,
-                description: member.description,
-                avatar: member.avatar,
-                workplace: member.workplace
-              };
-              if (!exclusions.some(excl => excl.id === member.id)) {
-                setExclusions([...exclusions, exclusionItem]);
-              }
+              // Directly call addExclusion, which now handles the logic
+              addExclusion(member); 
             }}
+            // Ensure onInclude calls removeExclusion
             onInclude={(id: number) => {
               removeExclusion(id);
             }}
             selections={selections}
             exclusions={exclusions}
-            conditions={showAdvancedConditions ? conditions : []}
+            conditions={conditions}
             itemConditions={itemConditions}
             onCountsChange={(counts) => setTabCounts(counts)}
-            toggleOptions={{ excludeExternal: toggleOptions.excludeExternal }}
+            toggleOptions={{ excludeExternal: toggleOptions.excludeExternal }} // Pass necessary toggle options
           />
         </div>
       </div>

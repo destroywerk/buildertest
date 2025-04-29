@@ -22,7 +22,8 @@ const memberData: Member[] = [
   { id: 31, name: 'Laura Schmidt', position: 'UX Designer', status: 'Active', department: 'Design', workplace: 'Berlin', added: false, avatar: 'https://randomuser.me/api/portraits/women/31.jpg' },
   { id: 32, name: 'Ryan Cooper', position: 'UX Designer', status: 'Active', department: 'Design', workplace: 'New York', added: false, avatar: 'https://randomuser.me/api/portraits/men/32.jpg' },
 
-  { id: 3, name: 'James Wilson', position: 'Software Engineer', status: 'Active', department: 'Engineering', workplace: 'Berlin', added: false, avatar: 'https://randomuser.me/api/portraits/men/3.jpg' },
+  // Keep only ID 3 for James Wilson
+  { id: 3, name: 'James Wilson', position: 'Software Engineer', status: 'Active', department: 'Engineering', workplace: 'Berlin', added: false, avatar: 'https://randomuser.me/api/portraits/men/3.jpg' }, 
   { id: 20, name: 'William Jones', position: 'Software Engineer', status: 'Active', department: 'Engineering', workplace: 'London', added: false, avatar: 'https://randomuser.me/api/portraits/men/20.jpg' },
   { id: 33, name: 'Emma Thompson', position: 'Software Engineer', status: 'Active', department: 'Engineering', workplace: 'London', added: false, avatar: 'https://randomuser.me/api/portraits/women/33.jpg' },
   { id: 34, name: 'Lucas Kim', position: 'Software Engineer', status: 'Active', department: 'Engineering', workplace: 'Berlin', added: false, avatar: 'https://randomuser.me/api/portraits/men/34.jpg' },
@@ -71,13 +72,13 @@ const memberData: Member[] = [
   { id: 61, name: 'Thomas Chen', position: 'Data Scientist', status: 'Active', department: 'Data Science', workplace: 'Paris', added: false, avatar: 'https://randomuser.me/api/portraits/men/61.jpg' },
 
   { id: 26, name: 'Ethan Anderson', position: 'Data Engineer', status: 'Active', department: 'Data Science', workplace: 'Berlin', added: false, avatar: 'https://randomuser.me/api/portraits/men/26.jpg' },
-  // { id: 62, name: 'Anna Lee', position: 'Data Engineer', status: 'Active', department: 'Data Science', workplace: 'London', added: false, avatar: 'https://randomuser.me/api/portraits/women/62.jpg' },
+  // { id: 62, name: 'Anna Lee', position: 'Data Engineer', status: 'Active', department: 'Data Science', workplace: 'London', added: false, avatar: 'https://randomuser.me/api/portraits/women/62.jpg' }, // Removed Anna Lee
   { id: 63, name: 'David Kim', position: 'Data Engineer', status: 'Active', department: 'Data Science', workplace: 'New York', added: false, avatar: undefined }, // Initials
   { id: 64, name: 'Elena Santos', position: 'Data Engineer', status: 'Active', department: 'Data Science', workplace: 'Madrid', added: false, avatar: 'https://randomuser.me/api/portraits/women/64.jpg' },
   { id: 65, name: 'Marcus Zhang', position: 'Data Engineer', status: 'Active', department: 'Data Science', workplace: 'Paris', added: false, avatar: 'https://randomuser.me/api/portraits/men/65.jpg' },
 
   { id: 13, name: 'Maria Garcia', position: 'Customer Success Manager', status: 'Active', department: 'Customer Success', workplace: 'Madrid', added: false, avatar: 'https://randomuser.me/api/portraits/women/13.jpg' },
-  { id: 66, name: 'James Wilson', position: 'Customer Success Manager', status: 'Active', department: 'Customer Success', workplace: 'London', added: false, avatar: 'https://randomuser.me/api/portraits/men/66.jpg' },
+  // { id: 66, name: 'James Wilson', position: 'Customer Success Manager', status: 'Active', department: 'Customer Success', workplace: 'London', added: false, avatar: 'https://randomuser.me/api/portraits/men/66.jpg' }, // Removed duplicate James Wilson
   { id: 67, name: 'Sofia Martinez', position: 'Customer Success Manager', status: 'Active', department: 'Customer Success', workplace: 'Berlin', added: false, avatar: undefined }, // Initials
   { id: 68, name: 'Lucas Brown', position: 'Customer Success Manager', status: 'Active', department: 'Customer Success', workplace: 'New York', added: false, avatar: 'https://randomuser.me/api/portraits/men/68.jpg' },
   { id: 69, name: 'Emma Taylor', position: 'Customer Success Manager', status: 'Active', department: 'Customer Success', workplace: 'Paris', added: false, avatar: 'https://randomuser.me/api/portraits/women/69.jpg' },
@@ -101,7 +102,8 @@ const memberData: Member[] = [
   { id: 81, name: 'Sophie Garcia', position: 'Sales Manager', status: 'Active', department: 'Sales', workplace: 'Paris', added: false, avatar: undefined }, // Initials
 
   { id: 11, name: 'Jennifer White', position: 'HR Manager', status: 'Active', department: 'Human Resources', workplace: 'London', added: false, avatar: 'https://randomuser.me/api/portraits/women/11.jpg' },
-  { id: 82, name: 'Thomas Wilson', position: 'HR Manager', status: 'Active', department: 'Human Resources', workplace: 'Berlin', added: false, avatar: 'https://randomuser.me/api/portraits/men/82.jpg' },
+  // { id: 82, name: 'Thomas Wilson', position: 'HR Manager', status: 'Active', department: 'Human Resources', workplace: 'Berlin', added: false, avatar: 'https://randomuser.me/api/portraits/men/82.jpg' }, // Renamed Thomas Wilson
+  { id: 82, name: 'Thomas R. Wilson', position: 'HR Manager', status: 'Active', department: 'Human Resources', workplace: 'Berlin', added: false, avatar: 'https://randomuser.me/api/portraits/men/82.jpg' }, 
   { id: 83, name: 'Maria Chen', position: 'HR Manager', status: 'Active', department: 'Human Resources', workplace: 'New York', added: false, avatar: 'https://randomuser.me/api/portraits/women/83.jpg' },
   { id: 84, name: 'Lucas Martinez', position: 'HR Manager', status: 'Active', department: 'Human Resources', workplace: 'Madrid', added: false, avatar: undefined }, // Initials
   { id: 85, name: 'Emma Brown', position: 'HR Manager', status: 'Active', department: 'Human Resources', workplace: 'Paris', added: false, avatar: 'https://randomuser.me/api/portraits/women/85.jpg' },
@@ -126,9 +128,10 @@ const memberData: Member[] = [
 
   { id: 18, name: 'Lucas Rodriguez', position: 'Operations Manager', status: 'Active', department: 'Operations', workplace: 'Madrid', added: false, avatar: 'https://randomuser.me/api/portraits/men/18.jpg' },
   { id: 98, name: 'Emma Davis', position: 'Operations Manager', status: 'Active', department: 'Operations', workplace: 'London', added: false, avatar: 'https://randomuser.me/api/portraits/women/98.jpg' },
-  { id: 99, name: 'Thomas Wilson', position: 'Operations Manager', status: 'Active', department: 'Operations', workplace: 'Berlin', added: false, avatar: 'https://randomuser.me/api/portraits/men/99.jpg' },
+  // { id: 99, name: 'Thomas Wilson', position: 'Operations Manager', status: 'Active', department: 'Operations', workplace: 'Berlin', added: false, avatar: 'https://randomuser.me/api/portraits/men/99.jpg' }, // Removed duplicate Thomas Wilson
+  // { id: 101, name: 'James Chen', position: 'Operations Manager', status: 'Active', department: 'Operations', workplace: 'Paris', added: false, avatar: 'https://randomuser.me/api/portraits/men/101.jpg' }, // Renamed James Chen
+  { id: 101, name: 'James C. Chen', position: 'Operations Manager', status: 'Active', department: 'Operations', workplace: 'Paris', added: false, avatar: 'https://randomuser.me/api/portraits/men/101.jpg' }, 
   { id: 100, name: 'Maria Lee', position: 'Operations Manager', status: 'Active', department: 'Operations', workplace: 'New York', added: false, avatar: undefined }, // Initials
-  { id: 101, name: 'James Chen', position: 'Operations Manager', status: 'Active', department: 'Operations', workplace: 'Paris', added: false, avatar: 'https://randomuser.me/api/portraits/men/101.jpg' },
 
   { id: 22, name: 'James Davis', position: 'Finance Manager', status: 'Active', department: 'Finance', workplace: 'London', added: false, avatar: 'https://randomuser.me/api/portraits/men/22.jpg' },
   { id: 102, name: 'Sofia Thompson', position: 'Finance Manager', status: 'Active', department: 'Finance', workplace: 'Berlin', added: false, avatar: 'https://randomuser.me/api/portraits/women/102.jpg' },
@@ -194,74 +197,109 @@ const MemberTable: React.FC<MemberTableProps> = ({
     return condition.values.includes(String(memberValue));
   };
 
-  // Get selected members based on selections and conditions
+  // Get selected members based *only* on selections and conditions (before exclusions)
   const selectedMembers = useMemo(() => {
+    console.log("Recalculating selectedMembers. Selections:", selections.map(s => ({id: s.id, type: s.type, name: s.name})));
     return memberData.filter(member => {
-      // Check if member is excluded
-      if (exclusions.some(e => e.id === member.id)) {
-        return false;
-      }
-
       // Check if member matches any selection's conditions
-      return selections.some(selection => {
+      const match = selections.some(selection => {
+        console.log(`  Checking member ${member.id} (${member.name}) against selection ${selection.id} (${selection.name}, type: ${selection.type})`);
         const selectionConditions = itemConditions[selection.id] || [];
         
         // For advanced selections, only include members if there are conditions with values
         if (selection.type === 'advanced') {
-          // If no conditions with values are set, don't include any members
           const hasValidConditions = selectionConditions.some(condition => 
             condition.values && condition.values.length > 0
           );
-          
           if (!hasValidConditions) {
-            return false;
+            console.log(`    Advanced selection ${selection.id} has no valid conditions. Result: false`);
+            return false; // Don't include if no valid conditions
           }
-
-          // Only check conditions that have values set
-          return selectionConditions
+          // Check conditions that have values
+          const advancedMatch = selectionConditions
             .filter(condition => condition.values && condition.values.length > 0)
-            .every(condition => memberMatchesCondition(member, condition));
+            .every(condition => {
+                const conditionResult = memberMatchesCondition(member, condition);
+                console.log(`      Advanced condition check: field=${condition.field}, values=${condition.values}, memberValue=${member[condition.field as keyof Member]}, Result: ${conditionResult}`);
+                return conditionResult;
+            });
+          console.log(`    Advanced selection ${selection.id} overall match: ${advancedMatch}`);
+          return advancedMatch;
         }
 
         // For regular selections
-        if (selectionConditions.length === 0) {
+        if (selectionConditions.length === 0) { // Direct match (no further conditions)
           if (selection.type === 'person') {
-            return member.id === selection.id;
+            const personMatch = member.id === selection.id;
+            console.log(`    Direct person check: member.id=${member.id}, selection.id=${selection.id}. Result: ${personMatch}`);
+            return personMatch;
           }
-          // Only check fields that exist on Member type
           if (selection.type === 'department' || selection.type === 'position' || selection.type === 'workplace') {
-            return member[selection.type] === selection.name.split(' (')[0];
+            const attributeMatch = member[selection.type] === selection.name.split(' (')[0];
+            console.log(`    Direct ${selection.type} check: member.${selection.type}=${member[selection.type]}, selection.name=${selection.name.split(' (')[0]}. Result: ${attributeMatch}`);
+            return attributeMatch;
           }
+          console.log(`    Direct match check failed (unknown type or condition): type=${selection.type}. Result: false`);
           return false;
         }
 
-        // Check if member matches all conditions for this selection
-        return selectionConditions.every(condition => 
-          memberMatchesCondition(member, condition)
-        );
-      });
+        // Regular selection with conditions
+        const conditionMatch = selectionConditions.every(condition => {
+           const conditionResult = memberMatchesCondition(member, condition);
+           console.log(`      Regular condition check: field=${condition.field}, values=${condition.values}, memberValue=${member[condition.field as keyof Member]}, Result: ${conditionResult}`);
+           return conditionResult;
+        });
+        console.log(`    Regular selection ${selection.id} with conditions overall match: ${conditionMatch}`);
+        return conditionMatch;
+      }); // End of selections.some callback
+      
+      console.log(`  --> Overall match for member ${member.id}: ${match}`);
+      return match;
     });
-  }, [selections, itemConditions, exclusions]);
+  }, [selections, itemConditions]); // Removed exclusions dependency here
 
-  // Filter members based on active tab
+  // Filter members based on active tab and exclusions
   const filteredMembers = useMemo(() => {
-    if (activeTab === 'members') {
-      return selectedMembers.filter(member => !exclusions.some(excl => excl.id === member.id));
-    } else if (activeTab === 'excluded') {
-      return selectedMembers.filter(member => exclusions.some(excl => excl.id === member.id));
-    } else {
-      return selectedMembers;
-    }
-  }, [activeTab, selectedMembers, exclusions]);
+    console.log('Calculating filteredMembers...');
+    console.log('Active Tab:', activeTab);
+    console.log('Selected Members (before exclusion filter):', selectedMembers.map(m => m.id));
+    console.log('Exclusions:', exclusions.map(e => e.id));
 
-  // Update counts
+    let result;
+    if (activeTab === 'members') {
+      // Show selected members that are NOT excluded
+      result = selectedMembers.filter(member => {
+        const isExcluded = exclusions.some(excl => excl.id === member.id);
+        // console.log(`Member ${member.id} isExcluded: ${isExcluded}`); // Uncomment for more detail
+        return !isExcluded;
+      });
+      console.log('Filtered Members (Members Tab):', result.map(m => m.id));
+    } else if (activeTab === 'excluded') {
+      // Show selected members that ARE excluded
+      result = selectedMembers.filter(member => exclusions.some(excl => excl.id === member.id));
+      console.log('Filtered Members (Excluded Tab):', result.map(m => m.id));
+    } else { // 'all' tab
+      // Show all selected members, regardless of exclusion status
+      result = selectedMembers;
+      console.log('Filtered Members (All Tab):', result.map(m => m.id));
+    }
+    return result;
+  }, [activeTab, selectedMembers, exclusions]); // Keep exclusions dependency here
+
+    // Update counts based on the final filtered lists
   useEffect(() => {
-    onCountsChange({
-      members: selectedMembers.filter(member => !exclusions.some(excl => excl.id === member.id)).length,
-      excluded: selectedMembers.filter(member => exclusions.some(excl => excl.id === member.id)).length,
+      // Count members tab: selectedMembers NOT in exclusions
+      const membersCount = selectedMembers.filter(member => !exclusions.some(excl => excl.id === member.id)).length;
+      // Count excluded tab: selectedMembers ARE in exclusions
+      const excludedCount = selectedMembers.filter(member => exclusions.some(excl => excl.id === member.id)).length;
+      
+      onCountsChange({
+      members: membersCount,
+      excluded: excludedCount,
       all: selectedMembers.length
     });
-  }, [selectedMembers, exclusions, onCountsChange]);
+  // }, [selectedMembers, exclusions, onCountsChange]); // Dependencies for count updates
+ }, [selectedMembers, exclusions, onCountsChange]); // Dependencies for count updates
 
   const renderMembers = () => {
     if (filteredMembers.length === 0) {
