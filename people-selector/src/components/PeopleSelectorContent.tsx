@@ -1,4 +1,6 @@
 import React, { useState, useMemo } from 'react';
+import Select from 'react-select';
+import BaseSelect from 'react-select';
 import SearchInput from './SearchInput';
 import MemberTable, { memberData } from './MemberTable';
 import { Member } from '../types/Member';
@@ -216,7 +218,6 @@ const PeopleSelectorContent: React.FC = () => {
     const matchingDepartments = peopleData
       .filter((item) => 
         item.type === 'department' && 
-        !selections.some(sel => sel.id === item.id) &&
         item.name.toLowerCase().includes(lowerQuery)
       ) as SearchResultItem[];
 
@@ -1222,7 +1223,7 @@ const SelectedItem: React.FC<SelectedItemProps> = ({
   );
 };
 
-// Component for condition row
+// Component for condition row (FROM COMMIT 126695a)
 interface ConditionRowProps {
   condition: Condition;
   options: {
@@ -1250,37 +1251,64 @@ const ConditionRow: React.FC<ConditionRowProps> = ({
   options, 
   onUpdate, 
   onRemove,
-  selections,
-  onAddSelection
+  selections, // Keep this prop if needed elsewhere, but it's unused in this old version
+  onAddSelection // Keep this prop if needed elsewhere, but it's unused in this old version
 }) => {
   const [isFocused, setIsFocused] = useState(false);
   
-  // Get options based on field
+  // Get options based on field - Adjust field names if necessary from the old commit
   const getFieldOptions = () => {
-    switch (condition.field) {
-      case 'department':
-        return options.departments;
-      case 'workplace':
-        return options.workplaces;
-      case 'position':
-        return Array.from(new Set(memberData.map(m => m.position)));
-      case 'status':
-        return statusOptions;
-      default:
-        return [];
+    // !! IMPORTANT: Need to verify the field names used in commit 126695a
+    // Assuming they were 'Department' and 'Workplace' based on the git show output
+    if (condition.field === 'department') { 
+      return options.departments.filter(dep => !condition.values?.includes(dep));
+    } else if (condition.field === 'workplace') {
+      return options.workplaces.filter(wp => !condition.values?.includes(wp));
+    } else if (condition.field === 'position') {
+        // Get unique positions from memberData
+        return Array.from(new Set(memberData.map(m => m.position))).filter(pos => pos);
+    } else if (condition.field === 'status') {
+        return statusOptions; // Use the global statusOptions
     }
+    return [];
+  };
+
+  // Remove a specific value from multi-select
+  const removeValue = (value: string) => {
+    if (condition.values) {
+      const newValues = condition.values.filter(v => v !== value);
+      onUpdate('values', newValues);
+    }
+  };
+
+  // Add a new value to multi-select
+  const addValue = (value: string) => {
+    const currentValues = condition.values || [];
+    if (!currentValues.includes(value)) {
+      onUpdate('values', [...currentValues, value]);
+    }
+  };
+
+  // Check if field uses multi-select (Adjust field names if needed)
+  const isMultiSelect = condition.field === 'department' || condition.field === 'workplace';
+
+  // Handle field change (Adjust field names if needed)
+  const handleFieldChange = (newField: string) => {
+    onUpdate('field', newField);
   };
 
   return (
     <div className="flex items-center">
+      {/* Field Selector (Dropdown) */}
       <div className="w-1/3">
         <div className="relative">
           <select 
             className="block w-full pl-3 pr-10 py-2 text-sm border border-gray-300 rounded-lg appearance-none bg-white h-[42px]"
             value={condition.field || ""}
-            onChange={(e) => onUpdate('field', e.target.value)}
+            onChange={(e) => handleFieldChange(e.target.value)}
           >
-            <option value="" className="text-gray-500 italic">Select value</option>
+            {/* Ensure these options match the 'field' values used */}
+            <option value="" className="text-gray-500 italic">Select field</option> 
             <option value="department">Department</option>
             <option value="workplace">Workplace</option>
             <option value="position">Position</option>
@@ -1294,6 +1322,7 @@ const ConditionRow: React.FC<ConditionRowProps> = ({
         </div>
       </div>
       
+      {/* Operator Selector (Dropdown) */}
       <div className="w-1/5 mx-2">
         <div className="relative">
           <select 
@@ -1303,39 +1332,112 @@ const ConditionRow: React.FC<ConditionRowProps> = ({
           >
             <option>is</option>
             <option>is not</option>
-            {!['department', 'workplace'].includes(condition.field) && <option>contains</option>}
+            {/* Adjust this logic if 'contains' operator was available for different fields previously */}
+            {!isMultiSelect && condition.field && <option>contains</option>} 
           </select>
           <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-            <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-            </svg>
+             <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+               <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+             </svg>
           </div>
         </div>
       </div>
       
+      {/* Value Selector (Token Input / Dropdown) */}
       <div className="flex-1">
-        <select 
-          className="block w-full pl-3 pr-10 py-2 text-sm border border-gray-300 rounded-lg appearance-none bg-white h-[42px]"
-          value={condition.values[0] || ''}
-          onChange={(e) => {
-            if (e.target.value) {
-              onUpdate('values', [e.target.value]);
-            }
-          }}
-        >
-          <option value="" className="text-gray-500 italic">Select a value</option>
-          {getFieldOptions().map(opt => (
-            <option key={opt} value={opt}>{opt}</option>
-          ))}
-        </select>
+        {isMultiSelect ? (
+          // Multi-select token input for Department/Workplace
+          <div className="relative flex-1">
+            <div 
+              className={`flex flex-wrap items-center border rounded-lg p-0.5 pl-2 bg-white min-h-[42px] cursor-text ${isFocused ? 'border-purple-300 ring-1 ring-purple-200' : 'border-gray-300'}`}
+              onClick={() => setIsFocused(true)}
+              onBlur={() => setTimeout(() => setIsFocused(false), 150)} // Delay blur to allow click on dropdown
+              tabIndex={0} // Make it focusable
+            >
+              {condition.values?.map((val, index) => (
+                <div key={index} className="flex items-center bg-gray-100 rounded-md m-0.5">
+                  <span className="px-1.5 py-0.5 text-sm">{val}</span>
+                  <button 
+                    className="text-gray-400 hover:text-gray-500 p-0.5 rounded hover:bg-gray-300"
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent triggering the main onClick
+                      removeValue(val);
+                      setIsFocused(true); // Keep focus after removing
+                    }}
+                    aria-label={`Remove ${val}`}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+              {(!condition.values || condition.values.length === 0) && isFocused && (
+                 <span className="px-2 py-1 text-sm text-gray-400 italic">Select {condition.field?.toLowerCase()}(s)...</span>
+              )}
+               {(!condition.values || condition.values.length === 0) && !isFocused && (
+                 <span className="px-2 py-1 text-sm text-gray-400 italic">Select {condition.field ? condition.field.toLowerCase() + '(s)' : 'value'}...</span>
+              )}
+            </div>
+            {/* Dropdown List */}
+            {isFocused && (
+              <div 
+                className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-[200px] overflow-y-auto"
+              >
+                {getFieldOptions().length > 0 ? (
+                  getFieldOptions().map(opt => (
+                    <div
+                      key={opt}
+                      className="px-4 py-2 text-sm hover:bg-gray-100 cursor-pointer"
+                      onMouseDown={(e) => { // Use onMouseDown to prevent blur before click registers
+                         e.preventDefault(); 
+                         addValue(opt); 
+                         // Keep focus by setting it again slightly delayed, or manage focus differently
+                         setTimeout(() => setIsFocused(true), 0); 
+                      }}
+                    >
+                      {opt}
+                    </div>
+                  ))
+                 ) : (
+                   <div className="px-4 py-2 text-sm text-gray-500">No options available</div>
+                 )
+                }
+              </div>
+            )}
+          </div>
+        ) : (
+          // Regular select for non-multi-select fields (Position, Status)
+          <select 
+            className="block w-full pl-3 pr-10 py-2 text-sm border border-gray-300 rounded-lg appearance-none bg-white h-[42px]"
+            // Use 'value' for single-select fields if that was the structure in commit 126695a
+            value={condition.values?.[0] || ''} // Assuming single value stored in values array for consistency now
+            onChange={(e) => {
+              if (e.target.value) {
+                onUpdate('values', [e.target.value]); // Update as array
+              } else {
+                onUpdate('values', []); // Clear value
+              }
+            }}
+            disabled={!condition.field} // Disable if no field selected
+          >
+            <option value="" className="text-gray-500 italic">Select a value</option>
+            {getFieldOptions().map(opt => (
+              <option key={opt} value={opt}>{opt}</option>
+            ))}
+          </select>
+        )}
       </div>
       
+      {/* Remove Button */}
       <button 
-        className="ml-2 text-gray-400 hover:text-gray-500"
+        className="ml-2 text-gray-400 hover:text-gray-500 p-1" // Added padding
         onClick={onRemove}
+        aria-label="Remove condition"
       >
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-          <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+           {/* Using a trash can icon for remove */}
+           <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
         </svg>
       </button>
     </div>
