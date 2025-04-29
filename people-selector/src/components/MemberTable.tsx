@@ -1,69 +1,170 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { Condition } from './PeopleSelectorContent';
+import { Member as BaseMember } from '../types/Member';
 
-export interface Member {
-  id: number;
-  name: string;
-  role: string;
+interface Member extends BaseMember {
   added: boolean;
-  avatar?: string;
-  department?: string;
   isExternal?: boolean;
-  workplace?: string;
 }
 
 // Sample data for members
-export const memberData: Member[] = [
-  { id: 1, name: 'Wade Warren', role: 'Product Designer', added: true, avatar: 'https://randomuser.me/api/portraits/men/1.jpg', department: 'Design', workplace: 'London' },
-  { id: 2, name: 'Darlene Robertson', role: 'Product Designer', added: true, avatar: 'https://randomuser.me/api/portraits/women/2.jpg', department: 'Design', workplace: 'London' },
-  { id: 3, name: 'Cameron Williamson', role: 'Product Designer', added: true, department: 'Design', workplace: 'London' },
-  { id: 4, name: 'Jerome Bell', role: 'Contractor', added: true, avatar: 'https://randomuser.me/api/portraits/men/4.jpg', department: 'Design', isExternal: true, workplace: 'London' },
-  { id: 5, name: 'Amelia Right', role: 'UX Designer', added: true, department: 'Design', workplace: 'London' },
-  { id: 6, name: 'Anne Behrenbrude', role: 'UX Designer', added: true, avatar: 'https://randomuser.me/api/portraits/women/5.jpg', department: 'Design', workplace: 'London' },
-  { id: 7, name: 'Marcus Chen', role: 'Employee', added: true, avatar: 'https://randomuser.me/api/portraits/men/7.jpg', department: 'Marketing', workplace: 'London' },
-  { id: 8, name: 'Sophia Martinez', role: 'Employee', added: true, avatar: 'https://randomuser.me/api/portraits/women/8.jpg', department: 'Marketing', workplace: 'London' },
-  { id: 9, name: 'Ethan Thompson', role: 'Employee', added: true, department: 'Marketing', workplace: 'London' },
-  { id: 10, name: 'Isabella Garcia', role: 'Employee', added: true, avatar: 'https://randomuser.me/api/portraits/women/10.jpg', department: 'Marketing', workplace: 'London' },
-  { id: 11, name: 'Lucas Anderson', role: 'Employee', added: true, avatar: 'https://randomuser.me/api/portraits/men/11.jpg', department: 'Engineering', workplace: 'London' },
-  { id: 12, name: 'Mia Rodriguez', role: 'Employee', added: true, department: 'Engineering', workplace: 'London' },
-  { id: 13, name: 'Noah Wilson', role: 'Employee', added: true, avatar: 'https://randomuser.me/api/portraits/men/13.jpg', department: 'Engineering', workplace: 'London' },
-  { id: 14, name: 'Emma Taylor', role: 'Employee', added: true, avatar: 'https://randomuser.me/api/portraits/women/14.jpg', department: 'Engineering', workplace: 'London' },
-  { id: 15, name: 'Liam Brown', role: 'Employee', added: true, department: 'Engineering', workplace: 'London' },
-  { id: 16, name: 'Olivia Davis', role: 'Employee', added: true, avatar: 'https://randomuser.me/api/portraits/women/16.jpg', department: 'Engineering', workplace: 'London' },
-  { id: 17, name: 'Marjory Dawes', role: 'Employee', added: true, avatar: 'https://randomuser.me/api/portraits/women/17.jpg', department: 'Marketing', workplace: 'London' },
-  { id: 19, name: 'Sarah Johnson', role: 'Employee', added: true, avatar: 'https://randomuser.me/api/portraits/women/19.jpg', department: 'Product Management', workplace: 'Berlin' },
-  { id: 20, name: 'Michael Chen', role: 'Employee', added: true, avatar: 'https://randomuser.me/api/portraits/men/20.jpg', department: 'Product Management', workplace: 'Berlin' },
-  { id: 21, name: 'Emily Wilson', role: 'Employee', added: true, avatar: 'https://randomuser.me/api/portraits/women/21.jpg', department: 'Product Management', workplace: 'Berlin' },
-  { id: 22, name: 'David Kim', role: 'Employee', added: true, avatar: 'https://randomuser.me/api/portraits/men/22.jpg', department: 'Product Management', workplace: 'Munich' },
-  { id: 23, name: 'Jennifer Lee', role: 'Employee', added: true, avatar: 'https://randomuser.me/api/portraits/women/23.jpg', department: 'Product Management', workplace: 'Munich' },
-  { id: 24, name: 'Robert Garcia', role: 'Employee', added: true, avatar: 'https://randomuser.me/api/portraits/men/24.jpg', department: 'Product Management', workplace: 'London' },
-  { id: 25, name: 'Lisa Thompson', role: 'Employee', added: true, avatar: 'https://randomuser.me/api/portraits/women/25.jpg', department: 'Product Management', isExternal: true, workplace: 'London' },
-  { id: 26, name: 'James Miller', role: 'Employee', added: true, avatar: 'https://randomuser.me/api/portraits/men/26.jpg', department: 'Product Management', isExternal: true, workplace: 'Berlin' },
-  { id: 27, name: 'Patricia Davis', role: 'Employee', added: true, avatar: 'https://randomuser.me/api/portraits/women/27.jpg', department: 'Product Management', workplace: 'London' },
-  { id: 28, name: 'Thomas Anderson', role: 'Employee', added: true, avatar: 'https://randomuser.me/api/portraits/men/28.jpg', department: 'Product Management', workplace: 'Munich' },
+const memberData: Member[] = [
+  // Assigning unique avatars to ~75% and initials to ~25%
+  { id: 1, name: 'Wade Warren', position: 'Product Designer', status: 'Active', department: 'Design', workplace: 'London', added: true, avatar: 'https://randomuser.me/api/portraits/men/1.jpg' },
+  { id: 2, name: 'Darlene Robertson', position: 'Product Designer', status: 'Active', department: 'Design', workplace: 'London', added: true, avatar: 'https://randomuser.me/api/portraits/women/2.jpg' },
+  { id: 19, name: 'Isabella Silva', position: 'Product Designer', status: 'Active', department: 'Design', workplace: 'Berlin', added: false, avatar: 'https://randomuser.me/api/portraits/women/19.jpg' },
+  { id: 28, name: 'Alex Chen', position: 'Product Designer', status: 'Active', department: 'Design', workplace: 'New York', added: false, avatar: undefined }, // Initials
+  { id: 29, name: 'Nina Patel', position: 'Product Designer', status: 'Active', department: 'Design', workplace: 'Berlin', added: false, avatar: 'https://randomuser.me/api/portraits/women/29.jpg' },
+
+  { id: 7, name: 'Emily Davis', position: 'UX Designer', status: 'Active', department: 'Design', workplace: 'New York', added: false, avatar: 'https://randomuser.me/api/portraits/women/7.jpg' },
+  { id: 23, name: 'Sophia Lee', position: 'UX Designer', status: 'Active', department: 'Design', workplace: 'Berlin', added: false, avatar: undefined }, // Initials
+  { id: 30, name: 'Marcus Wong', position: 'UX Designer', status: 'Active', department: 'Design', workplace: 'London', added: false, avatar: 'https://randomuser.me/api/portraits/men/30.jpg' },
+  { id: 31, name: 'Laura Schmidt', position: 'UX Designer', status: 'Active', department: 'Design', workplace: 'Berlin', added: false, avatar: 'https://randomuser.me/api/portraits/women/31.jpg' },
+  { id: 32, name: 'Ryan Cooper', position: 'UX Designer', status: 'Active', department: 'Design', workplace: 'New York', added: false, avatar: 'https://randomuser.me/api/portraits/men/32.jpg' },
+
+  { id: 3, name: 'James Wilson', position: 'Software Engineer', status: 'Active', department: 'Engineering', workplace: 'Berlin', added: false, avatar: 'https://randomuser.me/api/portraits/men/3.jpg' },
+  { id: 20, name: 'William Jones', position: 'Software Engineer', status: 'Active', department: 'Engineering', workplace: 'London', added: false, avatar: 'https://randomuser.me/api/portraits/men/20.jpg' },
+  { id: 33, name: 'Emma Thompson', position: 'Software Engineer', status: 'Active', department: 'Engineering', workplace: 'London', added: false, avatar: 'https://randomuser.me/api/portraits/women/33.jpg' },
+  { id: 34, name: 'Lucas Kim', position: 'Software Engineer', status: 'Active', department: 'Engineering', workplace: 'Berlin', added: false, avatar: 'https://randomuser.me/api/portraits/men/34.jpg' },
+  { id: 35, name: 'Sarah Chen', position: 'Software Engineer', status: 'Active', department: 'Engineering', workplace: 'New York', added: false, avatar: undefined }, // Initials
+
+  { id: 8, name: 'Robert Martinez', position: 'Frontend Developer', status: 'Active', department: 'Engineering', workplace: 'Berlin', added: false, avatar: 'https://randomuser.me/api/portraits/men/8.jpg' },
+  { id: 36, name: 'Anna Kowalski', position: 'Frontend Developer', status: 'Active', department: 'Engineering', workplace: 'London', added: false, avatar: 'https://randomuser.me/api/portraits/women/36.jpg' },
+  { id: 37, name: 'David Park', position: 'Frontend Developer', status: 'Active', department: 'Engineering', workplace: 'New York', added: false, avatar: 'https://randomuser.me/api/portraits/men/37.jpg' },
+  { id: 38, name: 'Maria Santos', position: 'Frontend Developer', status: 'Active', department: 'Engineering', workplace: 'Madrid', added: false, avatar: 'https://randomuser.me/api/portraits/women/38.jpg' },
+  { id: 39, name: 'Thomas Weber', position: 'Frontend Developer', status: 'Active', department: 'Engineering', workplace: 'Berlin', added: false, avatar: undefined }, // Initials
+
+  { id: 10, name: 'David Thompson', position: 'Backend Developer', status: 'Active', department: 'Engineering', workplace: 'Paris', added: false, avatar: 'https://randomuser.me/api/portraits/men/10.jpg' },
+  { id: 40, name: 'Julia Fischer', position: 'Backend Developer', status: 'Active', department: 'Engineering', workplace: 'Berlin', added: false, avatar: 'https://randomuser.me/api/portraits/women/40.jpg' },
+  { id: 41, name: 'Michael Zhang', position: 'Backend Developer', status: 'Active', department: 'Engineering', workplace: 'London', added: false, avatar: 'https://randomuser.me/api/portraits/men/41.jpg' },
+  { id: 42, name: 'Sofia Garcia', position: 'Backend Developer', status: 'Active', department: 'Engineering', workplace: 'Madrid', added: false, avatar: 'https://randomuser.me/api/portraits/women/42.jpg' },
+  { id: 43, name: 'Daniel Kim', position: 'Backend Developer', status: 'Active', department: 'Engineering', workplace: 'New York', added: false, avatar: undefined }, // Initials
+
+  { id: 4, name: 'Marjory Dawes', position: 'Marketing Manager', status: 'Active', department: 'Marketing', workplace: 'Paris', added: false, avatar: 'https://randomuser.me/api/portraits/women/4.jpg' },
+  { id: 44, name: 'John Smith', position: 'Marketing Manager', status: 'Active', department: 'Marketing', workplace: 'London', added: false, avatar: 'https://randomuser.me/api/portraits/men/44.jpg' },
+  { id: 45, name: 'Elena Rodriguez', position: 'Marketing Manager', status: 'Active', department: 'Marketing', workplace: 'Madrid', added: false, avatar: 'https://randomuser.me/api/portraits/women/45.jpg' },
+  { id: 46, name: 'Andreas Mueller', position: 'Marketing Manager', status: 'Active', department: 'Marketing', workplace: 'Berlin', added: false, avatar: undefined }, // Initials
+  { id: 47, name: 'Lisa Wang', position: 'Marketing Manager', status: 'Active', department: 'Marketing', workplace: 'New York', added: false, avatar: 'https://randomuser.me/api/portraits/women/47.jpg' },
+
+  { id: 9, name: 'Lisa Anderson', position: 'Content Strategist', status: 'Active', department: 'Marketing', workplace: 'London', added: false, avatar: 'https://randomuser.me/api/portraits/women/9.jpg' },
+  { id: 48, name: 'Mark Johnson', position: 'Content Strategist', status: 'Active', department: 'Marketing', workplace: 'New York', added: false, avatar: 'https://randomuser.me/api/portraits/men/48.jpg' },
+  { id: 49, name: 'Carmen Lopez', position: 'Content Strategist', status: 'Active', department: 'Marketing', workplace: 'Madrid', added: false, avatar: undefined }, // Initials
+  { id: 50, name: 'Felix Schmidt', position: 'Content Strategist', status: 'Active', department: 'Marketing', workplace: 'Berlin', added: false, avatar: 'https://randomuser.me/api/portraits/men/50.jpg' },
+  { id: 51, name: 'Yuki Tanaka', position: 'Content Strategist', status: 'Active', department: 'Marketing', workplace: 'Tokyo', added: false, avatar: 'https://randomuser.me/api/portraits/women/51.jpg' },
+
+  { id: 21, name: 'Olivia Miller', position: 'Marketing Specialist', status: 'Active', department: 'Marketing', workplace: 'New York', added: false, avatar: 'https://randomuser.me/api/portraits/women/21.jpg' },
+  { id: 52, name: 'James Lee', position: 'Marketing Specialist', status: 'Active', department: 'Marketing', workplace: 'London', added: false, avatar: 'https://randomuser.me/api/portraits/men/52.jpg' },
+  { id: 53, name: 'Isabella Martinez', position: 'Marketing Specialist', status: 'Active', department: 'Marketing', workplace: 'Madrid', added: false, avatar: 'https://randomuser.me/api/portraits/women/53.jpg' },
+  { id: 54, name: 'Lukas Weber', position: 'Marketing Specialist', status: 'Active', department: 'Marketing', workplace: 'Berlin', added: false, avatar: undefined }, // Initials
+  { id: 55, name: 'Sophia Kim', position: 'Marketing Specialist', status: 'Active', department: 'Marketing', workplace: 'Paris', added: false, avatar: 'https://randomuser.me/api/portraits/women/55.jpg' },
+
+  { id: 5, name: 'Sarah Johnson', position: 'Product Manager', status: 'Active', department: 'Product', workplace: 'London', added: false, avatar: 'https://randomuser.me/api/portraits/women/5.jpg' },
+  { id: 6, name: 'Michael Chen', position: 'Product Manager', status: 'Active', department: 'Product', workplace: 'Berlin', added: false, avatar: 'https://randomuser.me/api/portraits/men/6.jpg' },
+  { id: 24, name: 'Benjamin Wilson', position: 'Product Manager', status: 'Active', department: 'Product', workplace: 'Paris', added: false, avatar: undefined }, // Initials
+  { id: 56, name: 'Emma Davis', position: 'Product Manager', status: 'Active', department: 'Product', workplace: 'New York', added: false, avatar: 'https://randomuser.me/api/portraits/women/56.jpg' },
+  { id: 57, name: 'Lucas Martin', position: 'Product Manager', status: 'Active', department: 'Product', workplace: 'Madrid', added: false, avatar: 'https://randomuser.me/api/portraits/men/57.jpg' },
+
+  { id: 12, name: 'Daniel Lee', position: 'Data Scientist', status: 'Active', department: 'Data Science', workplace: 'Berlin', added: false, avatar: 'https://randomuser.me/api/portraits/men/12.jpg' },
+  { id: 58, name: 'Sophie Wilson', position: 'Data Scientist', status: 'Active', department: 'Data Science', workplace: 'London', added: false, avatar: 'https://randomuser.me/api/portraits/women/58.jpg' },
+  { id: 59, name: 'Alex Thompson', position: 'Data Scientist', status: 'Active', department: 'Data Science', workplace: 'New York', added: false, avatar: undefined }, // Initials
+  { id: 60, name: 'Maria Rodriguez', position: 'Data Scientist', status: 'Active', department: 'Data Science', workplace: 'Madrid', added: false, avatar: 'https://randomuser.me/api/portraits/women/60.jpg' },
+  { id: 61, name: 'Thomas Chen', position: 'Data Scientist', status: 'Active', department: 'Data Science', workplace: 'Paris', added: false, avatar: 'https://randomuser.me/api/portraits/men/61.jpg' },
+
+  { id: 26, name: 'Ethan Anderson', position: 'Data Engineer', status: 'Active', department: 'Data Science', workplace: 'Berlin', added: false, avatar: 'https://randomuser.me/api/portraits/men/26.jpg' },
+  // { id: 62, name: 'Anna Lee', position: 'Data Engineer', status: 'Active', department: 'Data Science', workplace: 'London', added: false, avatar: 'https://randomuser.me/api/portraits/women/62.jpg' },
+  { id: 63, name: 'David Kim', position: 'Data Engineer', status: 'Active', department: 'Data Science', workplace: 'New York', added: false, avatar: undefined }, // Initials
+  { id: 64, name: 'Elena Santos', position: 'Data Engineer', status: 'Active', department: 'Data Science', workplace: 'Madrid', added: false, avatar: 'https://randomuser.me/api/portraits/women/64.jpg' },
+  { id: 65, name: 'Marcus Zhang', position: 'Data Engineer', status: 'Active', department: 'Data Science', workplace: 'Paris', added: false, avatar: 'https://randomuser.me/api/portraits/men/65.jpg' },
+
+  { id: 13, name: 'Maria Garcia', position: 'Customer Success Manager', status: 'Active', department: 'Customer Success', workplace: 'Madrid', added: false, avatar: 'https://randomuser.me/api/portraits/women/13.jpg' },
+  { id: 66, name: 'James Wilson', position: 'Customer Success Manager', status: 'Active', department: 'Customer Success', workplace: 'London', added: false, avatar: 'https://randomuser.me/api/portraits/men/66.jpg' },
+  { id: 67, name: 'Sofia Martinez', position: 'Customer Success Manager', status: 'Active', department: 'Customer Success', workplace: 'Berlin', added: false, avatar: undefined }, // Initials
+  { id: 68, name: 'Lucas Brown', position: 'Customer Success Manager', status: 'Active', department: 'Customer Success', workplace: 'New York', added: false, avatar: 'https://randomuser.me/api/portraits/men/68.jpg' },
+  { id: 69, name: 'Emma Taylor', position: 'Customer Success Manager', status: 'Active', department: 'Customer Success', workplace: 'Paris', added: false, avatar: 'https://randomuser.me/api/portraits/women/69.jpg' },
+
+  { id: 25, name: 'Ava Thompson', position: 'Customer Success Representative', status: 'Active', department: 'Customer Success', workplace: 'London', added: false, avatar: 'https://randomuser.me/api/portraits/women/25.jpg' },
+  { id: 70, name: 'Michael Park', position: 'Customer Success Representative', status: 'Active', department: 'Customer Success', workplace: 'Berlin', added: false, avatar: 'https://randomuser.me/api/portraits/men/70.jpg' },
+  { id: 71, name: 'Laura Chen', position: 'Customer Success Representative', status: 'Active', department: 'Customer Success', workplace: 'New York', added: false, avatar: undefined }, // Initials
+  { id: 72, name: 'Daniel Santos', position: 'Customer Success Representative', status: 'Active', department: 'Customer Success', workplace: 'Madrid', added: false, avatar: 'https://randomuser.me/api/portraits/men/72.jpg' },
+  { id: 73, name: 'Sophie Martin', position: 'Customer Success Representative', status: 'Active', department: 'Customer Success', workplace: 'Paris', added: false, avatar: 'https://randomuser.me/api/portraits/women/73.jpg' },
+
+  { id: 16, name: 'Thomas Brown', position: 'Sales Director', status: 'Active', department: 'Sales', workplace: 'Berlin', added: false, avatar: 'https://randomuser.me/api/portraits/men/16.jpg' },
+  { id: 74, name: 'Emma Wilson', position: 'Sales Director', status: 'Active', department: 'Sales', workplace: 'London', added: false, avatar: 'https://randomuser.me/api/portraits/women/74.jpg' },
+  { id: 75, name: 'James Lee', position: 'Sales Director', status: 'Active', department: 'Sales', workplace: 'New York', added: false, avatar: 'https://randomuser.me/api/portraits/men/75.jpg' },
+  { id: 76, name: 'Maria Rodriguez', position: 'Sales Director', status: 'Active', department: 'Sales', workplace: 'Madrid', added: false, avatar: 'https://randomuser.me/api/portraits/women/76.jpg' },
+  { id: 77, name: 'Lucas Chen', position: 'Sales Director', status: 'Active', department: 'Sales', workplace: 'Paris', added: false, avatar: undefined }, // Initials
+
+  { id: 27, name: 'Mia Martinez', position: 'Sales Manager', status: 'Active', department: 'Sales', workplace: 'Madrid', added: false, avatar: 'https://randomuser.me/api/portraits/women/27.jpg' },
+  { id: 78, name: 'David Thompson', position: 'Sales Manager', status: 'Active', department: 'Sales', workplace: 'London', added: false, avatar: 'https://randomuser.me/api/portraits/men/78.jpg' },
+  { id: 79, name: 'Anna Kim', position: 'Sales Manager', status: 'Active', department: 'Sales', workplace: 'Berlin', added: false, avatar: 'https://randomuser.me/api/portraits/women/79.jpg' },
+  { id: 80, name: 'Michael Davis', position: 'Sales Manager', status: 'Active', department: 'Sales', workplace: 'New York', added: false, avatar: 'https://randomuser.me/api/portraits/men/80.jpg' },
+  { id: 81, name: 'Sophie Garcia', position: 'Sales Manager', status: 'Active', department: 'Sales', workplace: 'Paris', added: false, avatar: undefined }, // Initials
+
+  { id: 11, name: 'Jennifer White', position: 'HR Manager', status: 'Active', department: 'Human Resources', workplace: 'London', added: false, avatar: 'https://randomuser.me/api/portraits/women/11.jpg' },
+  { id: 82, name: 'Thomas Wilson', position: 'HR Manager', status: 'Active', department: 'Human Resources', workplace: 'Berlin', added: false, avatar: 'https://randomuser.me/api/portraits/men/82.jpg' },
+  { id: 83, name: 'Maria Chen', position: 'HR Manager', status: 'Active', department: 'Human Resources', workplace: 'New York', added: false, avatar: 'https://randomuser.me/api/portraits/women/83.jpg' },
+  { id: 84, name: 'Lucas Martinez', position: 'HR Manager', status: 'Active', department: 'Human Resources', workplace: 'Madrid', added: false, avatar: undefined }, // Initials
+  { id: 85, name: 'Emma Brown', position: 'HR Manager', status: 'Active', department: 'Human Resources', workplace: 'Paris', added: false, avatar: 'https://randomuser.me/api/portraits/women/85.jpg' },
+
+  { id: 14, name: 'John Taylor', position: 'DevOps Engineer', status: 'Active', department: 'DevOps', workplace: 'London', added: false, avatar: 'https://randomuser.me/api/portraits/men/14.jpg' },
+  { id: 86, name: 'Anna Lee', position: 'DevOps Engineer', status: 'Active', department: 'DevOps', workplace: 'Berlin', added: false, avatar: 'https://randomuser.me/api/portraits/women/86.jpg' },
+  { id: 87, name: 'David Chen', position: 'DevOps Engineer', status: 'Active', department: 'DevOps', workplace: 'New York', added: false, avatar: 'https://randomuser.me/api/portraits/men/87.jpg' },
+  { id: 88, name: 'Sofia Thompson', position: 'DevOps Engineer', status: 'Active', department: 'DevOps', workplace: 'Madrid', added: false, avatar: undefined }, // Initials
+  { id: 89, name: 'Michael Wilson', position: 'DevOps Engineer', status: 'Active', department: 'DevOps', workplace: 'Paris', added: false, avatar: 'https://randomuser.me/api/portraits/men/89.jpg' },
+
+  { id: 15, name: 'Sophie Martin', position: 'QA Engineer', status: 'Active', department: 'Quality Assurance', workplace: 'Paris', added: false, avatar: 'https://randomuser.me/api/portraits/women/15.jpg' },
+  { id: 90, name: 'James Park', position: 'QA Engineer', status: 'Active', department: 'Quality Assurance', workplace: 'London', added: false, avatar: 'https://randomuser.me/api/portraits/men/90.jpg' },
+  { id: 91, name: 'Elena Rodriguez', position: 'QA Engineer', status: 'Active', department: 'Quality Assurance', workplace: 'Madrid', added: false, avatar: 'https://randomuser.me/api/portraits/women/91.jpg' },
+  { id: 92, name: 'Thomas Lee', position: 'QA Engineer', status: 'Active', department: 'Quality Assurance', workplace: 'Berlin', added: false, avatar: 'https://randomuser.me/api/portraits/men/92.jpg' },
+  { id: 93, name: 'Anna Chen', position: 'QA Engineer', status: 'Active', department: 'Quality Assurance', workplace: 'New York', added: false, avatar: undefined }, // Initials
+
+  { id: 17, name: 'Emma Wilson', position: 'Legal Counsel', status: 'Active', department: 'Legal', workplace: 'London', added: false, avatar: 'https://randomuser.me/api/portraits/women/17.jpg' },
+  { id: 94, name: 'Michael Thompson', position: 'Legal Counsel', status: 'Active', department: 'Legal', workplace: 'Berlin', added: false, avatar: 'https://randomuser.me/api/portraits/men/94.jpg' },
+  { id: 95, name: 'Sofia Martinez', position: 'Legal Counsel', status: 'Active', department: 'Legal', workplace: 'Madrid', added: false, avatar: 'https://randomuser.me/api/portraits/women/95.jpg' },
+  { id: 96, name: 'David Chen', position: 'Legal Counsel', status: 'Active', department: 'Legal', workplace: 'New York', added: false, avatar: 'https://randomuser.me/api/portraits/men/96.jpg' },
+  { id: 97, name: 'Anna Brown', position: 'Legal Counsel', status: 'Active', department: 'Legal', workplace: 'Paris', added: false, avatar: undefined }, // Initials
+
+  { id: 18, name: 'Lucas Rodriguez', position: 'Operations Manager', status: 'Active', department: 'Operations', workplace: 'Madrid', added: false, avatar: 'https://randomuser.me/api/portraits/men/18.jpg' },
+  { id: 98, name: 'Emma Davis', position: 'Operations Manager', status: 'Active', department: 'Operations', workplace: 'London', added: false, avatar: 'https://randomuser.me/api/portraits/women/98.jpg' },
+  { id: 99, name: 'Thomas Wilson', position: 'Operations Manager', status: 'Active', department: 'Operations', workplace: 'Berlin', added: false, avatar: 'https://randomuser.me/api/portraits/men/99.jpg' },
+  { id: 100, name: 'Maria Lee', position: 'Operations Manager', status: 'Active', department: 'Operations', workplace: 'New York', added: false, avatar: undefined }, // Initials
+  { id: 101, name: 'James Chen', position: 'Operations Manager', status: 'Active', department: 'Operations', workplace: 'Paris', added: false, avatar: 'https://randomuser.me/api/portraits/men/101.jpg' },
+
+  { id: 22, name: 'James Davis', position: 'Finance Manager', status: 'Active', department: 'Finance', workplace: 'London', added: false, avatar: 'https://randomuser.me/api/portraits/men/22.jpg' },
+  { id: 102, name: 'Sofia Thompson', position: 'Finance Manager', status: 'Active', department: 'Finance', workplace: 'Berlin', added: false, avatar: 'https://randomuser.me/api/portraits/women/102.jpg' },
+  { id: 103, name: 'Michael Martinez', position: 'Finance Manager', status: 'Active', department: 'Finance', workplace: 'Madrid', added: false, avatar: 'https://randomuser.me/api/portraits/men/103.jpg' },
+  { id: 104, name: 'Emma Wilson', position: 'Finance Manager', status: 'Active', department: 'Finance', workplace: 'New York', added: false, avatar: undefined }, // Initials
+  { id: 105, name: 'Lucas Chen', position: 'Finance Manager', status: 'Active', department: 'Finance', workplace: 'Paris', added: false, avatar: 'https://randomuser.me/api/portraits/men/105.jpg' }
 ];
+
+export { memberData };
 
 export interface MemberTableProps {
   activeTab: string;
   onExclude: (member: {
     id: number;
-    type: string;
+    type: 'person' | 'department' | 'position' | 'workplace' | 'advanced' | 'team' | 'legal';
     name: string;
     description: string;
     avatar?: string;
+    workplace?: string;
   }) => void;
   onInclude: (id: number) => void;
   selections: Array<{
     id: number;
-    type: string;
+    type: 'person' | 'department' | 'position' | 'workplace' | 'advanced' | 'team' | 'legal';
     name: string;
     description: string;
+    avatar?: string;
+    workplace?: string;
   }>;
   exclusions: Array<{
     id: number;
-    type: string;
+    type: 'person' | 'department' | 'position' | 'workplace' | 'advanced' | 'team' | 'legal';
     name: string;
     description: string;
+    avatar?: string;
+    workplace?: string;
   }>;
   conditions: Condition[];
   itemConditions: Record<number, Condition[]>;
@@ -84,60 +185,63 @@ const MemberTable: React.FC<MemberTableProps> = ({
   onCountsChange,
   toggleOptions
 }) => {
+  // Helper function to check if a member matches a condition
+  const memberMatchesCondition = (member: Member, condition: Condition): boolean => {
+    if (!condition.values || condition.values.length === 0) return true;
+    
+    const memberValue = member[condition.field as keyof Member];
+    if (memberValue === undefined) return false;
+    return condition.values.includes(String(memberValue));
+  };
+
   // Get selected members based on selections and conditions
   const selectedMembers = useMemo(() => {
     return memberData.filter(member => {
-      // If there are advanced conditions, check those first
-      if (conditions.length > 0) {
-        return conditions.every(condition => {
-          if (condition.field === 'Department' && member.department) {
-            return condition.values?.includes(member.department) || false;
-          } else if (condition.field === 'Workplace' && member.workplace) {
-            return condition.values?.includes(member.workplace) || false;
-          } else if (condition.field === 'Title') {
-            return condition.value === member.role;
-          }
-          return false;
-        });
+      // Check if member is excluded
+      if (exclusions.some(e => e.id === member.id)) {
+        return false;
       }
 
-      // Check if member is selected by any selection and its conditions
+      // Check if member matches any selection's conditions
       return selections.some(selection => {
-        // First check if member matches the selection itself
-        let matchesSelection = false;
-        if (selection.type === 'person') {
-          matchesSelection = member.id === selection.id;
-        } else if (selection.type === 'department') {
-          matchesSelection = member.department === selection.name.split(' (')[0];
-        } else if (selection.type === 'position') {
-          matchesSelection = member.role === selection.name.split(' (')[0];
-        } else if (selection.type === 'workplace') {
-          matchesSelection = member.workplace === selection.name.split(' (')[0];
-        }
-
-        if (!matchesSelection) {
-          return false;
-        }
-
-        // Then check all conditions for this selection
         const selectionConditions = itemConditions[selection.id] || [];
-        if (selectionConditions.length === 0) {
-          return true;
+        
+        // For advanced selections, only include members if there are conditions with values
+        if (selection.type === 'advanced') {
+          // If no conditions with values are set, don't include any members
+          const hasValidConditions = selectionConditions.some(condition => 
+            condition.values && condition.values.length > 0
+          );
+          
+          if (!hasValidConditions) {
+            return false;
+          }
+
+          // Only check conditions that have values set
+          return selectionConditions
+            .filter(condition => condition.values && condition.values.length > 0)
+            .every(condition => memberMatchesCondition(member, condition));
         }
 
-        return selectionConditions.every(condition => {
-          if (condition.field === 'Department' && member.department) {
-            return condition.values?.includes(member.department) || false;
-          } else if (condition.field === 'Workplace' && member.workplace) {
-            return condition.values?.includes(member.workplace) || false;
-          } else if (condition.field === 'Title') {
-            return condition.value === member.role;
+        // For regular selections
+        if (selectionConditions.length === 0) {
+          if (selection.type === 'person') {
+            return member.id === selection.id;
+          }
+          // Only check fields that exist on Member type
+          if (selection.type === 'department' || selection.type === 'position' || selection.type === 'workplace') {
+            return member[selection.type] === selection.name.split(' (')[0];
           }
           return false;
-        });
+        }
+
+        // Check if member matches all conditions for this selection
+        return selectionConditions.every(condition => 
+          memberMatchesCondition(member, condition)
+        );
       });
     });
-  }, [selections, conditions, itemConditions]);
+  }, [selections, itemConditions, exclusions]);
 
   // Filter members based on active tab
   const filteredMembers = useMemo(() => {
@@ -218,7 +322,7 @@ const MemberTable: React.FC<MemberTableProps> = ({
                   id: member.id,
                   type: 'person',
                   name: member.name,
-                  description: member.role || 'No role',
+                  description: member.position || 'No position',
                   avatar: member.avatar
                 })}
                 className="px-2 py-1 text-xs font-medium rounded bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"

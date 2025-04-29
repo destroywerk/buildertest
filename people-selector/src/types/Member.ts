@@ -1,10 +1,9 @@
 export interface Member {
   id: number;
   name: string;
-  role: string;
-  added: boolean;
+  department: string;
+  workplace: string;
+  position: string;
+  status: string;
   avatar?: string;
-  department?: string;
-  isExternal?: boolean;
-  workplace?: string;
 } 

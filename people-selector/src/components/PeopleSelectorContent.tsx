@@ -12,74 +12,68 @@ const tabs = [
 
 // Dummy data for condition options
 const departmentOptions = [
-  'Engineering',
-  'Product Management',
   'Design',
+  'Engineering',
   'Marketing',
-  'Sales',
-  'Customer Success',
+  'Product',
   'Data Science',
+  'Customer Success',
   'DevOps',
   'Quality Assurance',
   'Human Resources',
   'Finance',
   'Legal',
-  'Operations'
+  'Operations',
+  'Sales'
 ];
 
-const workplaceOptions = ['Berlin', 'Munich', 'London', 'New York', 'San Francisco', 'Tokyo'];
+const workplaceOptions = ['Berlin', 'Munich', 'London', 'New York', 'San Francisco', 'Tokyo', 'Paris', 'Madrid'];
 const statusOptions = ['Onboarding', 'Active', 'On Leave', 'Terminated'];
 
 export interface Condition {
   id: number;
-  field: string;
+  field: 'department' | 'workplace' | 'position' | 'status';
   operator: string;
-  value?: string;
-  values?: string[];
-}
-
-interface SearchResultItem {
-  id: number;
-  type: string;
-  name: string;
-  description: string;
-  avatar?: string;
-  workplace?: string;
-}
-
-interface SearchResults {
-  department: SearchResultItem[];
-  position: SearchResultItem[];
-  workplace: SearchResultItem[];
-  person: SearchResultItem[];
-}
-
-interface Selection {
-  id: number;
-  type: string;
-  name: string;
-  description: string;
-  avatar?: string;
-  workplace?: string;
-}
-
-interface ExclusionItem {
-  id: number;
-  type: string;
-  name: string;
-  description: string;
-  avatar?: string;
+  values: string[];
 }
 
 interface Item {
   id: number;
-  type: string;
+  type: 'person' | 'department' | 'position' | 'workplace' | 'advanced' | 'team' | 'legal';
   name: string;
   description: string;
   avatar?: string;
+  workplace?: string;
 }
 
-const updatePeopleDataCounts = (memberData: Member[]): Item[] => {
+interface SearchResultItem extends Item {
+  avatar?: string;
+  workplace?: string;
+}
+
+interface ExclusionItem extends Item {
+  avatar?: string;
+  workplace?: string;
+}
+
+interface Selection extends Item {
+  avatar?: string;
+  workplace?: string;
+}
+
+const updatePeopleDataCounts = (memberData: Member[]) => {
+  const departments = new Set<string>();
+  const positions = new Set<string>();
+  const workplaces = new Set<string>();
+  const statuses = new Set<string>();
+
+  memberData.forEach(member => {
+    if (member.department) departments.add(member.department);
+    if (member.position) positions.add(member.position);
+    if (member.workplace) workplaces.add(member.workplace);
+    if (member.status) statuses.add(member.status);
+  });
+
   // Count members in each category
   const departmentCounts: { [key: string]: number } = {};
   const positionCounts: { [key: string]: number } = {};
@@ -89,8 +83,8 @@ const updatePeopleDataCounts = (memberData: Member[]): Item[] => {
     if (member.department) {
       departmentCounts[member.department] = (departmentCounts[member.department] || 0) + 1;
     }
-    if (member.role) {
-      positionCounts[member.role] = (positionCounts[member.role] || 0) + 1;
+    if (member.position) {
+      positionCounts[member.position] = (positionCounts[member.position] || 0) + 1;
     }
     if (member.workplace) {
       workplaceCounts[member.workplace] = (workplaceCounts[member.workplace] || 0) + 1;
@@ -153,7 +147,12 @@ const PeopleSelectorContent: React.FC = () => {
   
   // Conditions state
   const [conditions, setConditions] = useState<Condition[]>([
-    { id: 1, field: 'Department', operator: 'is', values: ['Product Management'] }
+    { 
+      id: 1,
+      field: 'department',
+      operator: 'is',
+      values: ['Product Management']
+    }
   ]);
   
   // Exclusions state
@@ -175,69 +174,75 @@ const PeopleSelectorContent: React.FC = () => {
   const [showMemberSearchResults, setShowMemberSearchResults] = useState(false);
   const [showExclusionSearchResults, setShowExclusionSearchResults] = useState(false);
 
-  // Move useMemo inside the component
+  // Create a local copy of member data with status
+  const localMemberData: Member[] = useMemo(() => {
+    return memberData.map((member: Member) => ({
+      ...member,
+      status: 'Active' // Set default status for all members
+    }));
+  }, []);
+
+  // Use local member data for people data
   const peopleData = useMemo(() => {
-    return updatePeopleDataCounts(memberData);
-  }, [memberData]);
+    return updatePeopleDataCounts(localMemberData);
+  }, [localMemberData]);
   
+  // Update member search results with proper typing
   const memberSearchResults = useMemo(() => {
-    if (!memberSearchQuery) return {
-      department: [],
-      position: [],
-      workplace: [],
-      person: []
-    };
+    if (!memberSearchQuery.trim()) return [];
 
     const lowerQuery = memberSearchQuery.toLowerCase();
     
-    const results: SearchResults = {
-      department: [],
-      position: [],
-      workplace: [],
-      person: []
-    };
-
-    // Search through departments
-    results.department = peopleData.filter(item => 
-      item.type === 'department' && 
-      (item.name.toLowerCase().includes(lowerQuery) || 
-       item.description.toLowerCase().includes(lowerQuery))
-    );
-
-    // Search through positions
-    results.position = peopleData.filter(item => 
-      item.type === 'position' && 
-      (item.name.toLowerCase().includes(lowerQuery) || 
-       item.description.toLowerCase().includes(lowerQuery))
-    );
-
-    // Search through workplaces
-    results.workplace = peopleData.filter(item => 
-      item.type === 'workplace' && 
-      (item.name.toLowerCase().includes(lowerQuery) || 
-       item.description.toLowerCase().includes(lowerQuery))
-    );
-
-    // Search through individual people
-    results.person = memberData
-      .filter(member => 
-        !selections.some(sel => sel.id === member.id) && // Don't show already selected people
-        (member.name.toLowerCase().includes(lowerQuery) ||
-         member.role.toLowerCase().includes(lowerQuery) ||
-         member.department?.toLowerCase().includes(lowerQuery) ||
-         member.workplace?.toLowerCase().includes(lowerQuery))
+    // First get matching people
+    const matchingPeople = localMemberData
+      .filter(
+        (member: Member) =>
+          !selections.some(sel => sel.id === member.id) && // Don't show already selected people
+          (member.name.toLowerCase().includes(lowerQuery) ||
+           member.position?.toLowerCase().includes(lowerQuery) ||
+           member.department?.toLowerCase().includes(lowerQuery) ||
+           member.workplace?.toLowerCase().includes(lowerQuery))
       )
-      .map(member => ({
+      .map((member: Member): SearchResultItem => ({
         id: member.id,
         type: 'person',
         name: member.name,
-        description: member.role,
+        description: member.position || 'No position',
         avatar: member.avatar,
         workplace: member.workplace
       }));
 
-    return results;
-  }, [memberSearchQuery, memberData, selections]);
+    // Get matching departments
+    const matchingDepartments = peopleData
+      .filter((item) => 
+        item.type === 'department' && 
+        !selections.some(sel => sel.id === item.id) &&
+        item.name.toLowerCase().includes(lowerQuery)
+      ) as SearchResultItem[];
+
+    // Get matching positions
+    const matchingPositions = peopleData
+      .filter((item) => 
+        item.type === 'position' && 
+        !selections.some(sel => sel.id === item.id) &&
+        item.name.toLowerCase().includes(lowerQuery)
+      ) as SearchResultItem[];
+
+    // Get matching workplaces
+    const matchingWorkplaces = peopleData
+      .filter((item) => 
+        item.type === 'workplace' && 
+        !selections.some(sel => sel.id === item.id) &&
+        item.name.toLowerCase().includes(lowerQuery)
+      ) as SearchResultItem[];
+
+    return [
+      ...matchingDepartments,
+      ...matchingPositions,
+      ...matchingWorkplaces,
+      ...matchingPeople
+    ];
+  }, [memberSearchQuery, localMemberData, selections, peopleData]);
 
   const handleAddSelection = (item: Selection) => {
     if (!selections.some(s => s.id === item.id)) {
@@ -269,7 +274,7 @@ const PeopleSelectorContent: React.FC = () => {
     return (
       <div className="absolute z-10 mt-1 bg-white rounded-md shadow-lg max-h-[400px] overflow-y-auto" style={{ width: 'calc(100% - 2rem)' }}>
         {sections.map(section => {
-          const items = memberSearchResults[section.key];
+          const items = memberSearchResults.filter(item => item.type === section.key);
           if (!items || items.length === 0) return null;
 
           return (
@@ -335,94 +340,115 @@ const PeopleSelectorContent: React.FC = () => {
     
     setConditions([...conditions, { 
       id: newId, 
-      field: 'Department', 
+      field: 'department', 
       operator: 'is', 
       values: [] // Start with empty values
     }]);
   };
   
-  // Update condition handling to only filter when values are selected
-  const filterMembers = (members: Member[]) => {
-    return members.filter(member => {
-      // Check global conditions
-      if (showAdvancedConditions) {
-        return conditions.every(condition => {
-          if (!condition.values || condition.values.length === 0) {
-            return true; // Skip empty conditions
-          }
-          
-          if (condition.field === 'Department') {
-            return member.department && condition.values.includes(member.department);
-          } else if (condition.field === 'Title') {
-            return member.role && condition.value === member.role;
-          } else if (condition.field === 'Workplace') {
-            return member.workplace && condition.values.includes(member.workplace);
-          }
-          return true;
-        });
+  // Add helper function to check if a member matches all conditions for a selection
+  const memberMatchesConditions = (member: Member, conditions: Condition[]) => {
+    return conditions.every(condition => {
+      const value = condition.values?.[0];
+      if (!value) return false;
+
+      switch (condition.field) {
+        case 'department':
+          return member.department === value;
+        case 'workplace':
+          return member.workplace === value;
+        case 'position':
+          return member.position === value;
+        case 'status':
+          return member.status === value;
+        default:
+          return false;
+      }
+    });
+  };
+
+  // Move itemConditions state before its usage
+  const [itemConditions, setItemConditions] = useState<Record<number, Condition[]>>({});
+
+  // Update the filterMembers function
+  const filterMembers = useMemo(() => {
+    if (!memberData) return [];
+    
+    return memberData.filter(member => {
+      // Check if member is in exclusions
+      if (exclusions.some(e => e.id === member.id)) {
+        return false;
       }
 
-      // Check item-specific conditions
-      return selections.every(selection => {
-        const conditions = itemConditions[selection.id] || [];
-        
-        // First check if the member matches the selection itself
-        let matchesSelection = false;
-        if (selection.type === 'department') {
-          matchesSelection = member.department === selection.name.split(' (')[0];
-        } else if (selection.type === 'position') {
-          matchesSelection = member.role === selection.name.split(' (')[0];
-        } else if (selection.type === 'workplace') {
-          matchesSelection = member.workplace === selection.name.split(' (')[0];
+      // Check direct selections
+      const directlySelected = selections.some(selection => 
+        selection.type !== 'advanced' && selection.id === member.id
+      );
+      if (directlySelected) {
+        return true;
+      }
+
+      // Check advanced conditions
+      const matchesAdvancedConditions = selections.some(selection => {
+        if (selection.type === 'advanced') {
+          const conditions = itemConditions[selection.id] || [];
+          return memberMatchesConditions(member, conditions);
         }
-
-        if (!matchesSelection) {
-          return false;
-        }
-
-        // Then check all conditions for this selection
-        return conditions.every(condition => {
-          if (!condition.values || condition.values.length === 0) {
-            return true; // Skip empty conditions
-          }
-
-          if (condition.field === 'Department') {
-            return member.department && condition.values.includes(member.department);
-          } else if (condition.field === 'Title') {
-            return member.role && condition.value === member.role;
-          } else if (condition.field === 'Workplace') {
-            return member.workplace && condition.values.includes(member.workplace);
-          }
-          return true;
-        });
+        return false;
       });
+
+      return matchesAdvancedConditions;
+    });
+  }, [memberData, selections, exclusions, itemConditions]);
+  
+  // Update condition
+  const updateItemCondition = (itemId: number, conditionId: number, field: string, value: any) => {
+    const currentConditions = itemConditions[itemId] || [];
+    setItemConditions({
+      ...itemConditions,
+      [itemId]: currentConditions.map(condition => {
+        if (condition.id === conditionId) {
+          const updatedCondition = { ...condition };
+          if (field === 'field') {
+            updatedCondition.field = value as Condition['field'];
+            updatedCondition.values = []; // Reset values when field changes
+          } else if (field === 'values') {
+            updatedCondition.values = Array.isArray(value) ? value : [value];
+          }
+          return updatedCondition;
+        }
+        return condition;
+      })
     });
   };
   
-  // Update condition
-  const updateCondition = (id: number, field: string, value: any) => {
-    setConditions(conditions.map(condition => {
-      if (condition.id === id) {
-        const updatedCondition = { ...condition, [field]: value };
-        // Initialize values array for multi-select fields if changing field type
-        if (field === 'field') {
-          if (value === 'Department' || value === 'Workplace') {
-            updatedCondition.values = [];
-            delete updatedCondition.value;
-          } else {
-            delete updatedCondition.values;
-            updatedCondition.value = '';
-          }
-        }
-        return updatedCondition;
-      }
-      return condition;
-    }));
-  };
-  
   // Remove condition
-  const removeCondition = (id: number) => {
-    setConditions(conditions.filter(condition => condition.id !== id));
+  const removeCondition = (conditionId: number) => {
+    // Check if this is an advanced condition
+    if (showAdvancedConditions) {
+      setConditions(prev => prev.filter(c => c.id !== conditionId));
+      return;
+    }
+
+    // Handle regular selection conditions
+    const selection = selections.find(s => {
+      const selectionConditions = itemConditions[s.id] || [];
+      return selectionConditions.some(c => c.id === conditionId);
+    });
+
+    if (selection) {
+      const updatedConditions = (itemConditions[selection.id] || []).filter(c => c.id !== conditionId);
+      
+      if (updatedConditions.length === 0) {
+        const { [selection.id]: _, ...restConditions } = itemConditions;
+        setItemConditions(restConditions);
+      } else {
+        setItemConditions({
+          ...itemConditions,
+          [selection.id]: updatedConditions
+        });
+      }
+    }
   };
   
   // Handle exclusion search
@@ -456,14 +482,15 @@ const PeopleSelectorContent: React.FC = () => {
   };
   
   // Add exclusion with proper typing
-  const addExclusion = (item: typeof peopleData[0]) => {
+  const addExclusion = (item: Item) => {
     if (!exclusions.some(excl => excl.id === item.id)) {
       const newExclusion: ExclusionItem = {
         id: item.id,
-        type: item.type,
+        type: item.type as 'person' | 'department' | 'position' | 'workplace',
         name: item.name,
         description: item.description || 'No description',
-        avatar: item.avatar
+        avatar: item.avatar,
+        workplace: item.workplace
       };
       setExclusions([...exclusions, newExclusion]);
       if (selections.some(sel => sel.id === item.id)) {
@@ -496,7 +523,7 @@ const PeopleSelectorContent: React.FC = () => {
             id: external.id,
             type: 'person',
             name: external.name,
-            description: external.role || 'No role',
+            description: external.position || 'No position',
             avatar: external.avatar
           }));
         
@@ -534,76 +561,43 @@ const PeopleSelectorContent: React.FC = () => {
   };
 
   const [showAdvancedConditions, setShowAdvancedConditions] = useState(false);
-  const [itemConditions, setItemConditions] = useState<Record<number, Condition[]>>({});
 
-  // Add condition to specific item
+  // Update the addItemCondition function
   const addItemCondition = (itemId: number) => {
+    const selection = selections.find(s => s.id === itemId);
+    
+    // Handle both advanced and regular selections by updating itemConditions
     const currentConditions = itemConditions[itemId] || [];
     const newId = currentConditions.length > 0 
       ? Math.max(...currentConditions.map(c => c.id)) + 1 
       : 1;
     
-    // If this is the first condition, convert the selection into a condition
-    if (currentConditions.length === 0) {
-      const selection = selections.find(s => s.id === itemId);
-      if (selection) {
-        const baseCondition = {
-          id: newId,
-          field: selection.type.charAt(0).toUpperCase() + selection.type.slice(1),
-          operator: "is",
-          values: [selection.name.split(' (')[0]] // Remove the count part
-        };
-        setItemConditions({
-          ...itemConditions,
-          [itemId]: [baseCondition]
-        });
-        return;
-      }
+    if (currentConditions.length === 0 && selection && selection.type !== 'advanced') {
+      // If it's the first condition for a regular selection, create a base condition
+      const baseCondition: Condition = {
+        id: newId,
+        field: selection.type as Condition['field'], // Use selection type as field
+        operator: "is",
+        values: [selection.name.split(' (')[0]] // Use selection name as value
+      };
+      setItemConditions({
+        ...itemConditions,
+        [itemId]: [baseCondition]
+      });
+    } else {
+      // For subsequent conditions or for advanced selections, add a new default condition
+      const newCondition: Condition = {
+        id: newId,
+        field: 'department', // Default field
+        operator: "is",
+        values: [] // Start with empty values
+      };
+      
+      setItemConditions({
+        ...itemConditions,
+        [itemId]: [...currentConditions, newCondition]
+      });
     }
-    
-    // Add a new empty condition
-    setItemConditions({
-      ...itemConditions,
-      [itemId]: [...currentConditions, { 
-        id: newId, 
-        field: "", 
-        operator: "is", 
-        values: [] 
-      }]
-    });
-  };
-
-  // Update condition for specific item
-  const updateItemCondition = (itemId: number, conditionId: number, field: string, value: any) => {
-    const currentConditions = itemConditions[itemId] || [];
-    setItemConditions({
-      ...itemConditions,
-      [itemId]: currentConditions.map(condition => {
-        if (condition.id === conditionId) {
-          const updatedCondition = { ...condition, [field]: value };
-          if (field === 'field') {
-            if (value === 'Department' || value === 'Workplace') {
-              updatedCondition.values = [];
-              delete updatedCondition.value;
-            } else {
-              delete updatedCondition.values;
-              updatedCondition.value = '';
-            }
-          }
-          return updatedCondition;
-        }
-        return condition;
-      })
-    });
-  };
-
-  // Remove condition from specific item
-  const removeItemCondition = (itemId: number, conditionId: number) => {
-    const currentConditions = itemConditions[itemId] || [];
-    setItemConditions({
-      ...itemConditions,
-      [itemId]: currentConditions.filter(condition => condition.id !== conditionId)
-    });
   };
 
   // Convert selections and their conditions to advanced conditions
@@ -616,21 +610,21 @@ const PeopleSelectorContent: React.FC = () => {
       if (selection.type === 'department') {
         newConditions.push({
           id: nextId++,
-          field: 'Department',
+          field: 'department',
           operator: 'is',
           values: [selection.name.split(' (')[0]] // Remove the count part
         });
       } else if (selection.type === 'position') {
         newConditions.push({
           id: nextId++,
-          field: 'Title',
+          field: 'position',
           operator: 'is',
-          value: selection.name.split(' (')[0] // Remove the count part
+          values: [selection.name.split(' (')[0]] // Remove the count part
         });
       } else if (selection.type === 'workplace') {
         newConditions.push({
           id: nextId++,
-          field: 'Workplace',
+          field: 'workplace',
           operator: 'is',
           values: [selection.name.split(' (')[0]] // Remove the count part
         });
@@ -659,7 +653,7 @@ const PeopleSelectorContent: React.FC = () => {
     let nextId = Math.max(...peopleData.map(item => item.id)) + 1;
 
     conditions.forEach(condition => {
-      if (condition.field === 'Department' && condition.values?.length) {
+      if (condition.field === 'department' && condition.values?.length) {
         condition.values.forEach(value => {
           const existingItem = peopleData.find(
             item => item.type === 'department' && item.name.split(' (')[0] === value
@@ -673,19 +667,21 @@ const PeopleSelectorContent: React.FC = () => {
             });
           }
         });
-      } else if (condition.field === 'Title' && condition.value) {
-        const existingItem = peopleData.find(
-          item => item.type === 'position' && item.name.split(' (')[0] === condition.value
-        );
-        if (existingItem) {
-          newSelections.push({
-            id: existingItem.id,
-            type: 'position',
-            name: existingItem.name,
-            description: existingItem.description
-          });
-        }
-      } else if (condition.field === 'Workplace' && condition.values?.length) {
+      } else if (condition.field === 'position' && condition.values?.length) {
+        condition.values.forEach(value => {
+          const existingItem = peopleData.find(
+            item => item.type === 'position' && item.name.split(' (')[0] === value
+          );
+          if (existingItem) {
+            newSelections.push({
+              id: existingItem.id,
+              type: 'position',
+              name: existingItem.name,
+              description: existingItem.description
+            });
+          }
+        });
+      } else if (condition.field === 'workplace' && condition.values?.length) {
         condition.values.forEach(value => {
           const existingItem = peopleData.find(
             item => item.type === 'workplace' && item.name.split(' (')[0] === value
@@ -708,6 +704,45 @@ const PeopleSelectorContent: React.FC = () => {
     setShowAdvancedConditions(false);
   };
 
+  // Add state for menu visibility
+  const [showMenu, setShowMenu] = useState(false);
+
+  // Add function to handle advanced condition
+  const addAdvancedCondition = () => {
+    const newId = Math.max(...selections.map(s => s.id || 0), 0) + 1;
+    const newSelection: Selection = {
+      id: newId,
+      type: 'advanced',
+      name: 'People added based on all of the following conditions',
+      description: ''
+    };
+    setSelections([...selections, newSelection]);
+    
+    // Initialize with an empty condition
+    const newCondition: Condition = {
+      id: 1,
+      field: 'department',
+      operator: 'is',
+      values: []
+    };
+    
+    setItemConditions({
+      ...itemConditions,
+      [newId]: [newCondition]
+    });
+    setShowMenu(false);
+  };
+
+  // Add function to clear all selections
+  const clearAllSelections = () => {
+    setSelections([]);
+    setExclusions([]);
+    setItemConditions({});
+    setConditions([]);
+    setShowAdvancedConditions(false);
+    setShowMenu(false);
+  };
+
   return (
     <div className="flex h-full">
       {/* Left section - Member selection */}
@@ -725,6 +760,48 @@ const PeopleSelectorContent: React.FC = () => {
         {/* Main content */}
         <div className="flex-1 overflow-y-auto p-6">
           <div className="max-w-3xl mx-auto px-12">
+            {/* Title section with menu */}
+            <div className="flex justify-between items-center mb-1">
+              <h2 className="text-base font-medium">Select members</h2>
+              <div className="relative">
+                <button 
+                  className="text-gray-500 hover:text-gray-700 p-1"
+                  onClick={() => setShowMenu(!showMenu)}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                  </svg>
+                </button>
+                {showMenu && (
+                  <div 
+                    className="absolute right-0 mt-1 w-56 bg-white rounded-md shadow-lg z-10 border border-gray-200"
+                    onBlur={() => setShowMenu(false)}
+                  >
+                    <div className="py-1">
+                      <button
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                        onClick={addAdvancedCondition}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+                        </svg>
+                        Add advanced condition
+                      </button>
+                      <button
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                        onClick={clearAllSelections}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                        Delete all members
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
             <p className="text-sm text-gray-500 mb-4">
               All selected items will be included in the group and automatically updated
             </p>
@@ -753,7 +830,7 @@ const PeopleSelectorContent: React.FC = () => {
                   onUpdateCondition={(conditionId, field, value) => 
                     updateItemCondition(item.id, conditionId, field, value)
                   }
-                  onRemoveCondition={(conditionId) => removeItemCondition(item.id, conditionId)}
+                  onRemoveCondition={(conditionId) => removeCondition(conditionId)}
                   options={{
                     departments: departmentOptions,
                     workplaces: workplaceOptions
@@ -841,29 +918,32 @@ const PeopleSelectorContent: React.FC = () => {
                          item.description.toLowerCase().includes(exclusionSearchQuery.toLowerCase()))
                       )
                       .sort((a, b) => a.name.localeCompare(b.name))
-                      .map(result => (
-                        <div 
-                          key={result.id}
-                          className="px-4 py-2 hover:bg-gray-50 cursor-pointer flex items-center"
-                          onClick={() => addExclusion(result)}
-                        >
-                          {result.avatar ? (
-                            <img 
-                              src={result.avatar} 
-                              alt={result.name} 
-                              className="w-8 h-8 rounded-full object-cover mr-3"
-                            />
-                          ) : (
-                            <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-800 mr-3">
-                              {result.name.split(' ').map((n: string) => n[0]).join('')}
+                      .map(result => {
+                        const typedResult = result as Item;
+                        return (
+                          <div 
+                            key={typedResult.id}
+                            className="px-4 py-2 hover:bg-gray-50 cursor-pointer flex items-center"
+                            onClick={() => addExclusion(typedResult)}
+                          >
+                            {typedResult.avatar ? (
+                              <img 
+                                src={typedResult.avatar} 
+                                alt={typedResult.name} 
+                                className="w-8 h-8 rounded-full object-cover mr-3"
+                              />
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-800 mr-3">
+                                {typedResult.name.split(' ').map((n: string) => n[0]).join('')}
+                              </div>
+                            )}
+                            <div>
+                              <div className="font-medium">{typedResult.name}</div>
+                              <div className="text-sm text-gray-500">{typedResult.description}</div>
                             </div>
-                          )}
-                          <div>
-                            <div className="font-medium">{result.name}</div>
-                            <div className="text-sm text-gray-500">{result.description}</div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                   </div>
                 )}
               </div>
@@ -973,9 +1053,17 @@ const PeopleSelectorContent: React.FC = () => {
         <div className="overflow-y-auto" style={{ height: 'calc(100% - 87px)' }}>
           <MemberTable 
             activeTab={activeTab} 
-            onExclude={(member) => {
+            onExclude={(member: Item) => {
+              const exclusionItem: ExclusionItem = {
+                id: member.id,
+                type: member.type as 'person' | 'department' | 'position' | 'workplace',
+                name: member.name,
+                description: member.description,
+                avatar: member.avatar,
+                workplace: member.workplace
+              };
               if (!exclusions.some(excl => excl.id === member.id)) {
-                setExclusions([...exclusions, member]);
+                setExclusions([...exclusions, exclusionItem]);
               }
             }}
             onInclude={(id: number) => {
@@ -1169,36 +1257,18 @@ const ConditionRow: React.FC<ConditionRowProps> = ({
   
   // Get options based on field
   const getFieldOptions = () => {
-    if (condition.field === 'Department') {
-      return options.departments.filter(dep => !condition.values?.includes(dep));
-    } else if (condition.field === 'Workplace') {
-      return options.workplaces.filter(wp => !condition.values?.includes(wp));
+    switch (condition.field) {
+      case 'department':
+        return options.departments;
+      case 'workplace':
+        return options.workplaces;
+      case 'position':
+        return Array.from(new Set(memberData.map(m => m.position)));
+      case 'status':
+        return statusOptions;
+      default:
+        return [];
     }
-    return [];
-  };
-
-  // Remove a specific value from multi-select
-  const removeValue = (value: string) => {
-    if (condition.values) {
-      const newValues = condition.values.filter(v => v !== value);
-      onUpdate('values', newValues);
-    }
-  };
-
-  // Add a new value to multi-select
-  const addValue = (value: string) => {
-    const currentValues = condition.values || [];
-    if (!currentValues.includes(value)) {
-      onUpdate('values', [...currentValues, value]);
-    }
-  };
-
-  // Check if field uses multi-select
-  const isMultiSelect = condition.field === 'Department' || condition.field === 'Workplace';
-
-  // Handle field change
-  const handleFieldChange = (newField: string) => {
-    onUpdate('field', newField);
   };
 
   return (
@@ -1208,13 +1278,13 @@ const ConditionRow: React.FC<ConditionRowProps> = ({
           <select 
             className="block w-full pl-3 pr-10 py-2 text-sm border border-gray-300 rounded-lg appearance-none bg-white h-[42px]"
             value={condition.field || ""}
-            onChange={(e) => handleFieldChange(e.target.value)}
+            onChange={(e) => onUpdate('field', e.target.value)}
           >
             <option value="" className="text-gray-500 italic">Select value</option>
-            <option>Department</option>
-            <option>Workplace</option>
-            <option>Position</option>
-            <option>Status</option>
+            <option value="department">Department</option>
+            <option value="workplace">Workplace</option>
+            <option value="position">Position</option>
+            <option value="status">Status</option>
           </select>
           <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
             <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -1233,7 +1303,7 @@ const ConditionRow: React.FC<ConditionRowProps> = ({
           >
             <option>is</option>
             <option>is not</option>
-            {!isMultiSelect && <option>contains</option>}
+            {!['department', 'workplace'].includes(condition.field) && <option>contains</option>}
           </select>
           <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
             <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -1244,69 +1314,20 @@ const ConditionRow: React.FC<ConditionRowProps> = ({
       </div>
       
       <div className="flex-1">
-        {isMultiSelect ? (
-          <div className="relative flex-1">
-            <div 
-              className="flex flex-wrap items-center border border-gray-300 rounded-lg p-0.5 pl-2 bg-white min-h-[42px] cursor-pointer"
-              onClick={() => setIsFocused(true)}
-            >
-              {condition.values?.map((val, index) => (
-                <div key={index} className="flex items-center bg-gray-100 rounded-md m-0.5">
-                  <span className="px-1.5 py-0.5 text-sm">{val}</span>
-                  <button 
-                    className="text-gray-400 hover:text-gray-500 p-0.5"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeValue(val);
-                    }}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                    </svg>
-                  </button>
-                </div>
-              ))}
-              <div className="px-2 py-1 text-sm text-gray-500">
-                {!condition.values?.length ? `Select ${condition.field.toLowerCase()}...` : ''}
-              </div>
-            </div>
-            {isFocused && (
-              <div 
-                className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-[200px] overflow-y-auto"
-                onMouseDown={(e) => e.preventDefault()}
-              >
-                {getFieldOptions().map(opt => (
-                  <div
-                    key={opt}
-                    className="px-4 py-2 text-sm hover:bg-gray-100 cursor-pointer"
-                    onClick={() => {
-                      addValue(opt);
-                      setIsFocused(false);
-                    }}
-                    onMouseDown={(e) => e.preventDefault()}
-                  >
-                    {opt}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        ) : (
-          <select 
-            className="block w-full pl-3 pr-10 py-2 text-sm border border-gray-300 rounded-lg appearance-none bg-white h-[42px]"
-            value={condition.value || ''}
-            onChange={(e) => {
-              if (e.target.value) {
-                onUpdate('value', e.target.value);
-              }
-            }}
-          >
-            <option value="">Select a value</option>
-            {getFieldOptions().map(opt => (
-              <option key={opt} value={opt}>{opt}</option>
-            ))}
-          </select>
-        )}
+        <select 
+          className="block w-full pl-3 pr-10 py-2 text-sm border border-gray-300 rounded-lg appearance-none bg-white h-[42px]"
+          value={condition.values[0] || ''}
+          onChange={(e) => {
+            if (e.target.value) {
+              onUpdate('values', [e.target.value]);
+            }
+          }}
+        >
+          <option value="" className="text-gray-500 italic">Select a value</option>
+          {getFieldOptions().map(opt => (
+            <option key={opt} value={opt}>{opt}</option>
+          ))}
+        </select>
       </div>
       
       <button 
