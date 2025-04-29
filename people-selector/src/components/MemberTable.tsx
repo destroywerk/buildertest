@@ -13,7 +13,7 @@ const memberData: Member[] = [
   { id: 1, name: 'Wade Warren', position: 'Product Designer', status: 'Active', department: 'Design', workplace: 'London', added: true, avatar: 'https://randomuser.me/api/portraits/men/1.jpg' },
   { id: 2, name: 'Darlene Robertson', position: 'Product Designer', status: 'Active', department: 'Design', workplace: 'London', added: true, avatar: 'https://randomuser.me/api/portraits/women/2.jpg' },
   { id: 19, name: 'Isabella Silva', position: 'Product Designer', status: 'Active', department: 'Design', workplace: 'Berlin', added: false, avatar: 'https://randomuser.me/api/portraits/women/19.jpg' },
-  { id: 28, name: 'Alex Chen', position: 'Product Designer', status: 'Active', department: 'Design', workplace: 'New York', added: false, avatar: undefined }, // Initials
+  { id: 28, name: 'Alex Chen', position: 'Product Designer', status: 'Active', department: 'Design', workplace: 'New York', added: false, avatar: 'https://randomuser.me/api/portraits/men/28.jpg' },
   { id: 29, name: 'Nina Patel', position: 'Product Designer', status: 'Active', department: 'Design', workplace: 'Berlin', added: false, avatar: 'https://randomuser.me/api/portraits/women/29.jpg' },
 
   { id: 7, name: 'Emily Davis', position: 'UX Designer', status: 'Active', department: 'Design', workplace: 'New York', added: false, avatar: 'https://randomuser.me/api/portraits/women/7.jpg' },
@@ -44,7 +44,7 @@ const memberData: Member[] = [
   { id: 4, name: 'Marjory Dawes', position: 'Marketing Manager', status: 'Active', department: 'Marketing', workplace: 'Paris', added: false, avatar: 'https://randomuser.me/api/portraits/women/4.jpg' },
   { id: 44, name: 'John Smith', position: 'Marketing Manager', status: 'Active', department: 'Marketing', workplace: 'London', added: false, avatar: 'https://randomuser.me/api/portraits/men/44.jpg' },
   { id: 45, name: 'Elena Rodriguez', position: 'Marketing Manager', status: 'Active', department: 'Marketing', workplace: 'Madrid', added: false, avatar: 'https://randomuser.me/api/portraits/women/45.jpg' },
-  { id: 46, name: 'Andreas Mueller', position: 'Marketing Manager', status: 'Active', department: 'Marketing', workplace: 'Berlin', added: false, avatar: undefined }, // Initials
+  { id: 46, name: 'Andreas Mueller', position: 'Marketing Manager', status: 'Active', department: 'Marketing', workplace: 'Berlin', added: false, avatar: 'https://randomuser.me/api/portraits/men/46.jpg' },
   { id: 47, name: 'Lisa Wang', position: 'Marketing Manager', status: 'Active', department: 'Marketing', workplace: 'New York', added: false, avatar: 'https://randomuser.me/api/portraits/women/47.jpg' },
 
   { id: 9, name: 'Lisa Anderson', position: 'Content Strategist', status: 'Active', department: 'Marketing', workplace: 'London', added: false, avatar: 'https://randomuser.me/api/portraits/women/9.jpg' },
@@ -124,7 +124,7 @@ const memberData: Member[] = [
   { id: 94, name: 'Michael Thompson', position: 'Legal Counsel', status: 'Active', department: 'Legal', workplace: 'Berlin', added: false, avatar: 'https://randomuser.me/api/portraits/men/94.jpg' },
   { id: 95, name: 'Sofia Martinez', position: 'Legal Counsel', status: 'Active', department: 'Legal', workplace: 'Madrid', added: false, avatar: 'https://randomuser.me/api/portraits/women/95.jpg' },
   { id: 96, name: 'David Chen', position: 'Legal Counsel', status: 'Active', department: 'Legal', workplace: 'New York', added: false, avatar: 'https://randomuser.me/api/portraits/men/96.jpg' },
-  { id: 97, name: 'Anna Brown', position: 'Legal Counsel', status: 'Active', department: 'Legal', workplace: 'Paris', added: false, avatar: undefined }, // Initials
+  { id: 97, name: 'Anna Brown', position: 'Legal Counsel', status: 'Active', department: 'Legal', workplace: 'Paris', added: false, avatar: 'https://randomuser.me/api/portraits/women/97.jpg' },
 
   { id: 18, name: 'Lucas Rodriguez', position: 'Operations Manager', status: 'Active', department: 'Operations', workplace: 'Madrid', added: false, avatar: 'https://randomuser.me/api/portraits/men/18.jpg' },
   { id: 98, name: 'Emma Davis', position: 'Operations Manager', status: 'Active', department: 'Operations', workplace: 'London', added: false, avatar: 'https://randomuser.me/api/portraits/women/98.jpg' },

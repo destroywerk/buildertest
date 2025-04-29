@@ -87,10 +87,22 @@ const SearchDropdown: React.FC<SearchDropdownProps> = ({
   }, [isOpen, onClose]);
 
   // Filter data based on search query (basic implementation)
-  const filteredPeople = useMemo(() => people.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())), [people, searchQuery]);
-  const filteredDepartments = useMemo(() => departments.filter(d => d.name.toLowerCase().includes(searchQuery.toLowerCase())), [departments, searchQuery]);
-  const filteredWorkplaces = useMemo(() => workplaces.filter(w => w.name.toLowerCase().includes(searchQuery.toLowerCase())), [workplaces, searchQuery]);
-  const filteredPositions = useMemo(() => positions.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())), [positions, searchQuery]);
+  const filteredPeople = useMemo(() => 
+    people.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
+          .sort((a, b) => a.name.localeCompare(b.name)),
+    [people, searchQuery]);
+  const filteredDepartments = useMemo(() => 
+    departments.filter(d => d.name.toLowerCase().includes(searchQuery.toLowerCase()))
+               .sort((a, b) => a.name.localeCompare(b.name)),
+    [departments, searchQuery]);
+  const filteredWorkplaces = useMemo(() => 
+    workplaces.filter(w => w.name.toLowerCase().includes(searchQuery.toLowerCase()))
+              .sort((a, b) => a.name.localeCompare(b.name)),
+    [workplaces, searchQuery]);
+  const filteredPositions = useMemo(() => 
+    positions.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
+             .sort((a, b) => a.name.localeCompare(b.name)),
+    [positions, searchQuery]);
 
 
   const renderList = (items: (Member | DataItem)[], type: string) => {
@@ -112,7 +124,7 @@ const SearchDropdown: React.FC<SearchDropdownProps> = ({
              )}
              {/* Add icons for other types if needed (e.g., based on item.type if it exists) */}
              <span>{item.name}</span>
-             {/* Conditionally render description if it exists */} 
+             {/* Conditionally render description if it exists */  }
              {'description' in item && item.description && <span className="text-gray-500 text-xs ml-1">({item.description.split(' (')[0].trim()})</span>}
 
            </li>
@@ -145,10 +157,10 @@ const SearchDropdown: React.FC<SearchDropdownProps> = ({
     // Styling inspired by the image: rounded, shadow, semi-transparent blurred background
     <div
       ref={dropdownRef}
-      className="absolute z-10 mt-1 w-full bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl border border-gray-200/50 overflow-hidden pt-4 px-6 pb-6" // Changed p-6 to pt-4 px-6 pb-6
+      className="absolute z-10 mt-1 w-full bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl border border-gray-200/50 overflow-hidden pt-2 px-6 pb-0" // Changed pb-5 to pb-0
     >
       {/* Tabs */}
-      <div className="flex border-b border-gray-200/80 mb-4 -mx-6 px-4"> {/* Adjust padding/margins for tabs */} 
+      <div className="flex mb-2 -mx-6 px-4"> {/* Changed mb-4 to mb-2 */} 
         {(['People', 'Departments', 'Workplaces', 'Positions'] as const).map((tab) => { // Removed 'All'
           const Icon = Icons[tab];
           const isActive = activeTab === tab;
@@ -156,10 +168,10 @@ const SearchDropdown: React.FC<SearchDropdownProps> = ({
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`flex items-center space-x-1.5 px-3 pb-2 pt-1 text-sm font-medium focus:outline-none border-b-2 transition-colors duration-150 ${
+              className={`flex items-center space-x-1.5 px-3 py-1.5 text-sm font-medium focus:outline-none transition-colors duration-150 rounded-xl ${ // Adjusted padding, added rounded-xl
                 isActive
-                  ? 'border-blue-600 text-blue-600' // Active: Blue text, blue border
-                  : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300' // Inactive: Grey text, transparent border, hover effects
+                  ? 'bg-purple-700/10 text-purple-700' // Reverted back to Purple bg (10%), purple text
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/50' // Inactive state without border
               }`}
             >
               <Icon />
