@@ -159,12 +159,12 @@ const PeopleSelectorContent: React.FC = () => {
   
   // Toggle options state
   const [toggleOptions, setToggleOptions] = useState({
-    excludeHireDate: false,
+    excludeHireDate: false, // Default to false
     hireDateMonths: '6',
-    excludeExternal: false,
-    excludeOnLeave: true,
-    onlyIncludeStatus: false,
-    statusFilter: 'Onboarding'
+    excludeExternal: false, // Default to false
+    excludeOnLeave: false, // Default to false
+    onlyIncludeStatus: false, // Default to false
+    statusFilter: [] as string[] // Default to empty array
   });
   
   // Search states
@@ -174,13 +174,17 @@ const PeopleSelectorContent: React.FC = () => {
   const [showExclusionSearchResults, setShowExclusionSearchResults] = useState(false);
   const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false);
   const searchWrapperRef = useRef<HTMLDivElement>(null);
+  const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false); // State for status dropdown
+  const statusDropdownRef = useRef<HTMLDivElement>(null); // Ref for status dropdown
 
   // Create a local copy of member data with status
   const localMemberData: Member[] = useMemo(() => {
-    return memberData.map((member: Member) => ({
-      ...member,
-      status: 'Active' // Set default status for all members
-    }));
+    // Return memberData directly, as status is now defined in the source
+    return memberData;
+    // return memberData.map((member: Member) => ({
+    //   ...member,
+    //   // status: 'Active' // REMOVED: Status is now set in MemberTable.tsx
+    // }));
   }, []);
 
   // Use local member data for people data
@@ -491,10 +495,11 @@ const PeopleSelectorContent: React.FC = () => {
       [option]: value
     });
 
+    // Existing logic for external employees
     if (option === 'excludeExternal') {
-      const externalEmployees = memberData.filter((member) => member.isExternal);
+      const externalEmployees = localMemberData.filter((member) => member.isExternal);
       
-      if (value) {
+      if (value) { // Toggle ON
         const newExclusions: ExclusionItem[] = externalEmployees
           .filter((external) => !exclusions.some(excl => excl.id === external.id))
           .map((external) => ({
@@ -502,25 +507,68 @@ const PeopleSelectorContent: React.FC = () => {
             type: 'person',
             name: external.name,
             description: external.position || 'No position',
-            avatar: external.avatar
+            avatar: external.avatar,
+            workplace: external.workplace
           }));
         
         if (newExclusions.length > 0) {
           setExclusions([...exclusions, ...newExclusions]);
         }
-      } else {
+      } else { // Toggle OFF
         setExclusions(exclusions.filter(excl => 
           !externalEmployees.some((external) => external.id === excl.id)
         ));
       }
     }
+    
+    // New logic for employees on leave
+    if (option === 'excludeOnLeave') {
+      const onLeaveEmployees = localMemberData.filter((member) => member.status === 'On Leave');
+      
+      if (value) { // Toggle ON
+        const newExclusions: ExclusionItem[] = onLeaveEmployees
+          .filter((onLeave) => !exclusions.some(excl => excl.id === onLeave.id))
+          .map((onLeave) => ({
+            id: onLeave.id,
+            type: 'person',
+            name: onLeave.name,
+            description: onLeave.position || 'No position',
+            avatar: onLeave.avatar,
+            workplace: onLeave.workplace
+          }));
+          
+        if (newExclusions.length > 0) {
+           setExclusions(prevExclusions => [...prevExclusions, ...newExclusions]);
+        }
+      } else { // Toggle OFF
+        setExclusions(prevExclusions => prevExclusions.filter(excl => 
+          !onLeaveEmployees.some((onLeave) => onLeave.id === excl.id)
+        ));
+      }
+    }
   };
   
-  // Update dropdown value
+  // Update dropdown value (No longer used for status filter)
   const handleDropdownChange = (option: string, value: string) => {
     setToggleOptions({
       ...toggleOptions,
       [option]: value
+    });
+  };
+
+  // New handler for multi-select status filter
+  const handleStatusFilterChange = (status: string, isChecked: boolean) => {
+    setToggleOptions(prev => {
+      const currentStatuses = prev.statusFilter;
+      let newStatuses;
+      if (isChecked) {
+        // Add status if not already present
+        newStatuses = currentStatuses.includes(status) ? currentStatuses : [...currentStatuses, status];
+      } else {
+        // Remove status
+        newStatuses = currentStatuses.filter(s => s !== status);
+      }
+      return { ...prev, statusFilter: newStatuses };
     });
   };
 
@@ -985,14 +1033,56 @@ const PeopleSelectorContent: React.FC = () => {
                   active={toggleOptions.excludeOnLeave}
                   onToggle={(value) => handleToggleChange('excludeOnLeave', value)}
                 />
-                <ToggleOption 
-                  label="Only include people with status" 
-                  value={toggleOptions.statusFilter}
-                  active={toggleOptions.onlyIncludeStatus}
-                  onToggle={(value) => handleToggleChange('onlyIncludeStatus', value)}
-                  onValueChange={(value) => handleDropdownChange('statusFilter', value)}
-                  options={statusOptions}
-                />
+                {/* Status Filter - Replaced ToggleOption with custom dropdown */}
+                <div className="flex items-center">
+                   <label className="inline-flex items-center cursor-pointer mr-3">
+                    <span className="relative">
+                      <span 
+                        className={`block w-10 h-6 ${toggleOptions.onlyIncludeStatus ? 'bg-purple-700' : 'bg-gray-300'} rounded-full transition-colors duration-200 ease-in-out`}
+                        onClick={() => handleToggleChange('onlyIncludeStatus', !toggleOptions.onlyIncludeStatus)}
+                      >
+                        <span className={`absolute left-0.5 top-0.5 bg-white w-5 h-5 rounded-full transition-transform duration-200 ease-in-out ${toggleOptions.onlyIncludeStatus ? 'transform translate-x-4' : ''}`} />
+                      </span>
+                    </span>
+                    <span className="ml-3 text-sm text-gray-700">Only include people with status</span>
+                  </label>
+
+                  {/* Status Dropdown Button/Display */} 
+                  <div className="relative" ref={statusDropdownRef}>
+                    <button
+                      type="button"
+                      className={`flex items-center justify-between w-full min-w-[150px] pl-3 pr-2 py-1 text-sm border rounded-md ${toggleOptions.onlyIncludeStatus ? 'border-gray-300 bg-white' : 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed'}`}
+                      onClick={() => toggleOptions.onlyIncludeStatus && setIsStatusDropdownOpen(!isStatusDropdownOpen)}
+                      disabled={!toggleOptions.onlyIncludeStatus}
+                    >
+                      <span className="truncate">
+                        {toggleOptions.statusFilter.length > 0 
+                          ? toggleOptions.statusFilter.join(', ') 
+                          : <span className="text-gray-400">Select status...</span>}
+                      </span>
+                      <svg className={`h-4 w-4 ml-1 transition-transform ${isStatusDropdownOpen ? 'rotate-180' : ''}`} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+
+                    {/* Status Checkbox Dropdown */} 
+                    {isStatusDropdownOpen && (
+                      <div className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md border border-gray-200 max-h-48 overflow-y-auto">
+                        {statusOptions.map(status => (
+                          <label key={status} className="flex items-center px-3 py-2 text-sm hover:bg-gray-50 cursor-pointer">
+                            <input 
+                              type="checkbox"
+                              className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                              checked={toggleOptions.statusFilter.includes(status)}
+                              onChange={(e) => handleStatusFilterChange(status, e.target.checked)}
+                            />
+                            <span className="ml-2 text-gray-700">{status}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
 
               {/* Advanced exclusions link */}
@@ -1084,7 +1174,12 @@ const PeopleSelectorContent: React.FC = () => {
             conditions={conditions}
             itemConditions={itemConditions}
             onCountsChange={(counts) => setTabCounts(counts)}
-            toggleOptions={{ excludeExternal: toggleOptions.excludeExternal }} // Pass necessary toggle options
+            toggleOptions={{
+              excludeExternal: toggleOptions.excludeExternal,
+              // Pass status filter options down
+              onlyIncludeStatus: toggleOptions.onlyIncludeStatus,
+              statusFilter: toggleOptions.statusFilter
+            }}
           />
         </div>
       </div>

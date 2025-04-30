@@ -6,4 +6,5 @@ export interface Member {
   position: string;
   status: string;
   avatar?: string;
+  isExternal?: boolean;
 } 

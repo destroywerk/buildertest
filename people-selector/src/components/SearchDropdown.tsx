@@ -104,7 +104,8 @@ const SearchDropdown: React.FC<SearchDropdownProps> = ({
              .sort((a, b) => a.name.localeCompare(b.name)),
     [positions, searchQuery]);
 
-
+  const hasSearchQuery = searchQuery.trim().length > 0;
+  
   const renderList = (items: (Member | DataItem)[], type: string) => {
      if (!items || items.length === 0) {
        return <div className="p-4 text-sm text-gray-500">No {type} found.</div>;
@@ -133,6 +134,35 @@ const SearchDropdown: React.FC<SearchDropdownProps> = ({
      );
    };
 
+  // Re-added function to render combined search results
+  const renderSearchResults = () => {
+    const sections = [
+      { title: 'People', items: filteredPeople, type: 'people' },
+      { title: 'Departments', items: filteredDepartments, type: 'departments' },
+      { title: 'Workplaces', items: filteredWorkplaces, type: 'workplaces' },
+      { title: 'Positions', items: filteredPositions, type: 'positions' },
+    ];
+
+    const hasResults = sections.some(sec => sec.items.length > 0);
+
+    if (!hasResults) {
+      return <div className="p-4 text-sm text-gray-500">No results found for "{searchQuery}".</div>;
+    }
+
+    return (
+      <div className="max-h-80 overflow-y-auto">
+        {sections.map(section => (
+          section.items.length > 0 && (
+            <div key={section.type}>
+              <h3 className="px-2 pt-2 pb-1 text-xs font-semibold text-gray-500 uppercase">{section.title}</h3>
+              {renderList(section.items, section.type)}
+            </div>
+          )
+        ))}
+      </div>
+    );
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'People':
@@ -159,31 +189,33 @@ const SearchDropdown: React.FC<SearchDropdownProps> = ({
       ref={dropdownRef}
       className="absolute z-10 mt-1 w-full bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl border border-gray-200/50 overflow-hidden pt-2 px-6 pb-0" // Changed pb-5 to pb-0
     >
-      {/* Tabs */}
-      <div className="flex mb-2 -mx-6 px-4"> {/* Changed mb-4 to mb-2 */} 
-        {(['People', 'Departments', 'Workplaces', 'Positions'] as const).map((tab) => { // Removed 'All'
-          const Icon = Icons[tab];
-          const isActive = activeTab === tab;
-          return (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`flex items-center space-x-1.5 px-3 py-1.5 text-sm font-medium focus:outline-none transition-colors duration-150 rounded-xl ${ // Adjusted padding, added rounded-xl
-                isActive
-                  ? 'bg-purple-700/10 text-purple-700' // Reverted back to Purple bg (10%), purple text
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/50' // Inactive state without border
-              }`}
-            >
-              <Icon />
-              <span>{tab}</span>
-            </button>
-          );
-        })}
-      </div>
+      {/* Tabs - Only show if no search query */}
+      {!hasSearchQuery && (
+        <div className="flex mb-2 -mx-6 px-4"> 
+          {(['People', 'Departments', 'Workplaces', 'Positions'] as const).map((tab) => { 
+            const Icon = Icons[tab];
+            const isActive = activeTab === tab;
+            return (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`flex items-center space-x-1.5 px-3 py-1.5 text-sm font-medium focus:outline-none transition-colors duration-150 rounded-xl ${ // Adjusted padding, added rounded-xl
+                  isActive
+                    ? 'bg-purple-700/10 text-purple-700' // Reverted back to Purple bg (10%), purple text
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/50' // Inactive state without border
+                }`}
+              >
+                <Icon />
+                <span>{tab}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
-      {/* Content */}
-      <div className="-mx-2"> {/* Negative margin to counteract item padding? */} 
-        {renderContent()}
+      {/* Content - Show search results if query exists, otherwise show tab content */}
+      <div className="-mx-2"> 
+        {hasSearchQuery ? renderSearchResults() : renderContent()} {/* Re-added conditional render */} 
       </div>
     </div>
   );

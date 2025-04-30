@@ -10,14 +10,15 @@ interface Member extends BaseMember {
 // Sample data for members
 const memberData: Member[] = [
   // Assigning unique avatars to ~75% and initials to ~25%
+  // Assigning statuses: ~90% Active, ~5% Onboarding, ~5% On Leave
   { id: 1, name: 'Wade Warren', position: 'Product Designer', status: 'Active', department: 'Design', workplace: 'London', added: true, avatar: 'https://randomuser.me/api/portraits/men/1.jpg' },
   { id: 2, name: 'Darlene Robertson', position: 'Product Designer', status: 'Active', department: 'Design', workplace: 'London', added: true, avatar: 'https://randomuser.me/api/portraits/women/2.jpg' },
   { id: 19, name: 'Isabella Silva', position: 'Product Designer', status: 'Active', department: 'Design', workplace: 'Berlin', added: false, avatar: 'https://randomuser.me/api/portraits/women/19.jpg' },
-  { id: 28, name: 'Alex Chen', position: 'Product Designer', status: 'Active', department: 'Design', workplace: 'New York', added: false, avatar: 'https://randomuser.me/api/portraits/men/28.jpg' },
+  { id: 28, name: 'Alex Chen', position: 'Product Designer', status: 'Active', department: 'Design', workplace: 'New York', added: false, avatar: 'https://randomuser.me/api/portraits/men/28.jpg', isExternal: true },
   { id: 29, name: 'Nina Patel', position: 'Product Designer', status: 'Active', department: 'Design', workplace: 'Berlin', added: false, avatar: 'https://randomuser.me/api/portraits/women/29.jpg' },
 
   { id: 7, name: 'Emily Davis', position: 'UX Designer', status: 'Active', department: 'Design', workplace: 'New York', added: false, avatar: 'https://randomuser.me/api/portraits/women/7.jpg' },
-  { id: 23, name: 'Sophia Lee', position: 'UX Designer', status: 'Active', department: 'Design', workplace: 'Berlin', added: false, avatar: undefined }, // Initials
+  { id: 23, name: 'Sophia Lee', position: 'UX Designer', status: 'Onboarding', department: 'Design', workplace: 'Berlin', added: false, avatar: undefined, isExternal: true }, // Status: Onboarding
   { id: 30, name: 'Marcus Wong', position: 'UX Designer', status: 'Active', department: 'Design', workplace: 'London', added: false, avatar: 'https://randomuser.me/api/portraits/men/30.jpg' },
   { id: 31, name: 'Laura Schmidt', position: 'UX Designer', status: 'Active', department: 'Design', workplace: 'Berlin', added: false, avatar: 'https://randomuser.me/api/portraits/women/31.jpg' },
   { id: 32, name: 'Ryan Cooper', position: 'UX Designer', status: 'Active', department: 'Design', workplace: 'New York', added: false, avatar: 'https://randomuser.me/api/portraits/men/32.jpg' },
@@ -33,53 +34,53 @@ const memberData: Member[] = [
   { id: 36, name: 'Anna Kowalski', position: 'Frontend Developer', status: 'Active', department: 'Engineering', workplace: 'London', added: false, avatar: 'https://randomuser.me/api/portraits/women/36.jpg' },
   { id: 37, name: 'David Park', position: 'Frontend Developer', status: 'Active', department: 'Engineering', workplace: 'New York', added: false, avatar: 'https://randomuser.me/api/portraits/men/37.jpg' },
   { id: 38, name: 'Maria Santos', position: 'Frontend Developer', status: 'Active', department: 'Engineering', workplace: 'Madrid', added: false, avatar: 'https://randomuser.me/api/portraits/women/38.jpg' },
-  { id: 39, name: 'Thomas Weber', position: 'Frontend Developer', status: 'Active', department: 'Engineering', workplace: 'Berlin', added: false, avatar: undefined }, // Initials
+  { id: 39, name: 'Thomas Weber', position: 'Frontend Developer', status: 'Onboarding', department: 'Engineering', workplace: 'Berlin', added: false, avatar: undefined }, // Status: Onboarding
 
   { id: 10, name: 'David Thompson', position: 'Backend Developer', status: 'Active', department: 'Engineering', workplace: 'Paris', added: false, avatar: 'https://randomuser.me/api/portraits/men/10.jpg' },
   { id: 40, name: 'Julia Fischer', position: 'Backend Developer', status: 'Active', department: 'Engineering', workplace: 'Berlin', added: false, avatar: 'https://randomuser.me/api/portraits/women/40.jpg' },
   { id: 41, name: 'Michael Zhang', position: 'Backend Developer', status: 'Active', department: 'Engineering', workplace: 'London', added: false, avatar: 'https://randomuser.me/api/portraits/men/41.jpg' },
   { id: 42, name: 'Sofia Garcia', position: 'Backend Developer', status: 'Active', department: 'Engineering', workplace: 'Madrid', added: false, avatar: 'https://randomuser.me/api/portraits/women/42.jpg' },
-  { id: 43, name: 'Daniel Kim', position: 'Backend Developer', status: 'Active', department: 'Engineering', workplace: 'New York', added: false, avatar: undefined }, // Initials
+  { id: 43, name: 'Daniel Kim', position: 'Backend Developer', status: 'On Leave', department: 'Engineering', workplace: 'New York', added: false, avatar: undefined }, // Status: On Leave
 
   { id: 4, name: 'Marjory Dawes', position: 'Marketing Manager', status: 'Active', department: 'Marketing', workplace: 'Paris', added: false, avatar: 'https://randomuser.me/api/portraits/women/4.jpg' },
   { id: 44, name: 'John Smith', position: 'Marketing Manager', status: 'Active', department: 'Marketing', workplace: 'London', added: false, avatar: 'https://randomuser.me/api/portraits/men/44.jpg' },
   { id: 45, name: 'Elena Rodriguez', position: 'Marketing Manager', status: 'Active', department: 'Marketing', workplace: 'Madrid', added: false, avatar: 'https://randomuser.me/api/portraits/women/45.jpg' },
-  { id: 46, name: 'Andreas Mueller', position: 'Marketing Manager', status: 'Active', department: 'Marketing', workplace: 'Berlin', added: false, avatar: 'https://randomuser.me/api/portraits/men/46.jpg' },
+  { id: 46, name: 'Andreas Mueller', position: 'Marketing Manager', status: 'On Leave', department: 'Marketing', workplace: 'Berlin', added: false, avatar: 'https://randomuser.me/api/portraits/men/46.jpg' }, // Status: On Leave
   { id: 47, name: 'Lisa Wang', position: 'Marketing Manager', status: 'Active', department: 'Marketing', workplace: 'New York', added: false, avatar: 'https://randomuser.me/api/portraits/women/47.jpg' },
 
   { id: 9, name: 'Lisa Anderson', position: 'Content Strategist', status: 'Active', department: 'Marketing', workplace: 'London', added: false, avatar: 'https://randomuser.me/api/portraits/women/9.jpg' },
   { id: 48, name: 'Mark Johnson', position: 'Content Strategist', status: 'Active', department: 'Marketing', workplace: 'New York', added: false, avatar: 'https://randomuser.me/api/portraits/men/48.jpg' },
-  { id: 49, name: 'Carmen Lopez', position: 'Content Strategist', status: 'Active', department: 'Marketing', workplace: 'Madrid', added: false, avatar: undefined }, // Initials
+  { id: 49, name: 'Carmen Lopez', position: 'Content Strategist', status: 'Onboarding', department: 'Marketing', workplace: 'Madrid', added: false, avatar: undefined }, // Status: Onboarding
   { id: 50, name: 'Felix Schmidt', position: 'Content Strategist', status: 'Active', department: 'Marketing', workplace: 'Berlin', added: false, avatar: 'https://randomuser.me/api/portraits/men/50.jpg' },
   { id: 51, name: 'Yuki Tanaka', position: 'Content Strategist', status: 'Active', department: 'Marketing', workplace: 'Tokyo', added: false, avatar: 'https://randomuser.me/api/portraits/women/51.jpg' },
 
   { id: 21, name: 'Olivia Miller', position: 'Marketing Specialist', status: 'Active', department: 'Marketing', workplace: 'New York', added: false, avatar: 'https://randomuser.me/api/portraits/women/21.jpg' },
   { id: 52, name: 'James Lee', position: 'Marketing Specialist', status: 'Active', department: 'Marketing', workplace: 'London', added: false, avatar: 'https://randomuser.me/api/portraits/men/52.jpg' },
   { id: 53, name: 'Isabella Martinez', position: 'Marketing Specialist', status: 'Active', department: 'Marketing', workplace: 'Madrid', added: false, avatar: 'https://randomuser.me/api/portraits/women/53.jpg' },
-  { id: 54, name: 'Lukas Weber', position: 'Marketing Specialist', status: 'Active', department: 'Marketing', workplace: 'Berlin', added: false, avatar: undefined }, // Initials
+  { id: 54, name: 'Lukas Weber', position: 'Marketing Specialist', status: 'Onboarding', department: 'Marketing', workplace: 'Berlin', added: false, avatar: undefined }, // Status: Onboarding
   { id: 55, name: 'Sophia Kim', position: 'Marketing Specialist', status: 'Active', department: 'Marketing', workplace: 'Paris', added: false, avatar: 'https://randomuser.me/api/portraits/women/55.jpg' },
 
   { id: 5, name: 'Sarah Johnson', position: 'Product Manager', status: 'Active', department: 'Product', workplace: 'London', added: false, avatar: 'https://randomuser.me/api/portraits/women/5.jpg' },
   { id: 6, name: 'Michael Chen', position: 'Product Manager', status: 'Active', department: 'Product', workplace: 'Berlin', added: false, avatar: 'https://randomuser.me/api/portraits/men/6.jpg' },
-  { id: 24, name: 'Benjamin Wilson', position: 'Product Manager', status: 'Active', department: 'Product', workplace: 'Paris', added: false, avatar: undefined }, // Initials
+  { id: 24, name: 'Benjamin Wilson', position: 'Product Manager', status: 'On Leave', department: 'Product', workplace: 'Paris', added: false, avatar: undefined, isExternal: true }, // Status: On Leave
   { id: 56, name: 'Emma Davis', position: 'Product Manager', status: 'Active', department: 'Product', workplace: 'New York', added: false, avatar: 'https://randomuser.me/api/portraits/women/56.jpg' },
   { id: 57, name: 'Lucas Martin', position: 'Product Manager', status: 'Active', department: 'Product', workplace: 'Madrid', added: false, avatar: 'https://randomuser.me/api/portraits/men/57.jpg' },
 
   { id: 12, name: 'Daniel Lee', position: 'Data Scientist', status: 'Active', department: 'Data Science', workplace: 'Berlin', added: false, avatar: 'https://randomuser.me/api/portraits/men/12.jpg' },
   { id: 58, name: 'Sophie Wilson', position: 'Data Scientist', status: 'Active', department: 'Data Science', workplace: 'London', added: false, avatar: 'https://randomuser.me/api/portraits/women/58.jpg' },
-  { id: 59, name: 'Alex Thompson', position: 'Data Scientist', status: 'Active', department: 'Data Science', workplace: 'New York', added: false, avatar: undefined }, // Initials
+  { id: 59, name: 'Alex Thompson', position: 'Data Scientist', status: 'Onboarding', department: 'Data Science', workplace: 'New York', added: false, avatar: undefined }, // Status: Onboarding
   { id: 60, name: 'Maria Rodriguez', position: 'Data Scientist', status: 'Active', department: 'Data Science', workplace: 'Madrid', added: false, avatar: 'https://randomuser.me/api/portraits/women/60.jpg' },
   { id: 61, name: 'Thomas Chen', position: 'Data Scientist', status: 'Active', department: 'Data Science', workplace: 'Paris', added: false, avatar: 'https://randomuser.me/api/portraits/men/61.jpg' },
 
   { id: 26, name: 'Ethan Anderson', position: 'Data Engineer', status: 'Active', department: 'Data Science', workplace: 'Berlin', added: false, avatar: 'https://randomuser.me/api/portraits/men/26.jpg' },
   // { id: 62, name: 'Anna Lee', position: 'Data Engineer', status: 'Active', department: 'Data Science', workplace: 'London', added: false, avatar: 'https://randomuser.me/api/portraits/women/62.jpg' }, // Removed Anna Lee
-  { id: 63, name: 'David Kim', position: 'Data Engineer', status: 'Active', department: 'Data Science', workplace: 'New York', added: false, avatar: undefined }, // Initials
+  { id: 63, name: 'David Kim', position: 'Data Engineer', status: 'On Leave', department: 'Data Science', workplace: 'New York', added: false, avatar: undefined }, // Status: On Leave
   { id: 64, name: 'Elena Santos', position: 'Data Engineer', status: 'Active', department: 'Data Science', workplace: 'Madrid', added: false, avatar: 'https://randomuser.me/api/portraits/women/64.jpg' },
   { id: 65, name: 'Marcus Zhang', position: 'Data Engineer', status: 'Active', department: 'Data Science', workplace: 'Paris', added: false, avatar: 'https://randomuser.me/api/portraits/men/65.jpg' },
 
   { id: 13, name: 'Maria Garcia', position: 'Customer Success Manager', status: 'Active', department: 'Customer Success', workplace: 'Madrid', added: false, avatar: 'https://randomuser.me/api/portraits/women/13.jpg' },
   // { id: 66, name: 'James Wilson', position: 'Customer Success Manager', status: 'Active', department: 'Customer Success', workplace: 'London', added: false, avatar: 'https://randomuser.me/api/portraits/men/66.jpg' }, // Removed duplicate James Wilson
-  { id: 67, name: 'Sofia Martinez', position: 'Customer Success Manager', status: 'Active', department: 'Customer Success', workplace: 'Berlin', added: false, avatar: undefined }, // Initials
+  { id: 67, name: 'Sofia Martinez', position: 'Customer Success Manager', status: 'On Leave', department: 'Customer Success', workplace: 'Berlin', added: false, avatar: undefined }, // Status: On Leave
   { id: 68, name: 'Lucas Brown', position: 'Customer Success Manager', status: 'Active', department: 'Customer Success', workplace: 'New York', added: false, avatar: 'https://randomuser.me/api/portraits/men/68.jpg' },
   { id: 69, name: 'Emma Taylor', position: 'Customer Success Manager', status: 'Active', department: 'Customer Success', workplace: 'Paris', added: false, avatar: 'https://randomuser.me/api/portraits/women/69.jpg' },
 
@@ -174,6 +175,9 @@ export interface MemberTableProps {
   onCountsChange: (counts: { members: number; excluded: number; all: number; }) => void;
   toggleOptions: {
     excludeExternal: boolean;
+    // Add status filter props
+    onlyIncludeStatus: boolean;
+    statusFilter: string[];
   };
 }
 
@@ -186,7 +190,7 @@ const MemberTable: React.FC<MemberTableProps> = ({
   conditions,
   itemConditions,
   onCountsChange,
-  toggleOptions
+  toggleOptions // Contains onlyIncludeStatus and statusFilter now
 }) => {
   // Helper function to check if a member matches a condition
   const memberMatchesCondition = (member: Member, condition: Condition): boolean => {
@@ -262,44 +266,80 @@ const MemberTable: React.FC<MemberTableProps> = ({
   const filteredMembers = useMemo(() => {
     console.log('Calculating filteredMembers...');
     console.log('Active Tab:', activeTab);
-    console.log('Selected Members (before exclusion filter):', selectedMembers.map(m => m.id));
+    console.log('Selected Members (before exclusion/status filter):', selectedMembers.map(m => m.id));
     console.log('Exclusions:', exclusions.map(e => e.id));
+    console.log('Toggle Options:', toggleOptions);
+
+    // Apply status filter first if the toggle is on
+    let statusFilteredMembers = selectedMembers;
+    if (toggleOptions.onlyIncludeStatus && toggleOptions.statusFilter.length > 0) {
+      statusFilteredMembers = selectedMembers.filter(member => 
+        toggleOptions.statusFilter.includes(member.status)
+      );
+      console.log('Members after status filter:', statusFilteredMembers.map(m => ({id: m.id, status: m.status })));
+    } else {
+      console.log('Status filter not active or empty.');
+    }
+
 
     let result;
     if (activeTab === 'members') {
-      // Show selected members that are NOT excluded
-      result = selectedMembers.filter(member => {
+      // Show status-filtered members that are NOT manually excluded
+      result = statusFilteredMembers.filter(member => {
         const isExcluded = exclusions.some(excl => excl.id === member.id);
-        // console.log(`Member ${member.id} isExcluded: ${isExcluded}`); // Uncomment for more detail
         return !isExcluded;
       });
       console.log('Filtered Members (Members Tab):', result.map(m => m.id));
     } else if (activeTab === 'excluded') {
-      // Show selected members that ARE excluded
-      result = selectedMembers.filter(member => exclusions.some(excl => excl.id === member.id));
+      // Show status-filtered members that ARE manually excluded
+      // OR show members excluded purely by the status filter
+      result = selectedMembers.filter(member => { // Start from selectedMembers again for excluded tab logic
+         const isManuallyExcluded = exclusions.some(excl => excl.id === member.id);
+         const isExcludedByStatus = toggleOptions.onlyIncludeStatus && 
+                                    toggleOptions.statusFilter.length > 0 && 
+                                    !toggleOptions.statusFilter.includes(member.status);
+         return isManuallyExcluded || isExcludedByStatus;
+      });
       console.log('Filtered Members (Excluded Tab):', result.map(m => m.id));
     } else { // 'all' tab
-      // Show all selected members, regardless of exclusion status
-      result = selectedMembers;
+      // Show all initially selected members, regardless of exclusion or status filter status 
+      // (as 'all' implies pre-exclusion/filter view of selections)
+      result = selectedMembers; 
       console.log('Filtered Members (All Tab):', result.map(m => m.id));
     }
     return result;
-  }, [activeTab, selectedMembers, exclusions]); // Keep exclusions dependency here
+  }, [activeTab, selectedMembers, exclusions, toggleOptions]); // Add toggleOptions dependency
 
-    // Update counts based on the final filtered lists
+    // Update counts based on the final filtered lists reflecting status filter and manual exclusions
   useEffect(() => {
-      // Count members tab: selectedMembers NOT in exclusions
-      const membersCount = selectedMembers.filter(member => !exclusions.some(excl => excl.id === member.id)).length;
-      // Count excluded tab: selectedMembers ARE in exclusions
-      const excludedCount = selectedMembers.filter(member => exclusions.some(excl => excl.id === member.id)).length;
+      // Recalculate status-filtered members here for accurate counts
+      let statusFilteredForCount = selectedMembers;
+      if (toggleOptions.onlyIncludeStatus && toggleOptions.statusFilter.length > 0) {
+          statusFilteredForCount = selectedMembers.filter(member => 
+              toggleOptions.statusFilter.includes(member.status)
+          );
+      }
+
+      // Count members tab: statusFilteredForCount NOT in manual exclusions
+      const membersCount = statusFilteredForCount.filter(member => 
+          !exclusions.some(excl => excl.id === member.id)
+      ).length;
+      
+      // Count excluded tab: selectedMembers ARE manually excluded OR excluded by status filter
+      const excludedCount = selectedMembers.filter(member => {
+         const isManuallyExcluded = exclusions.some(excl => excl.id === member.id);
+         const isExcludedByStatus = toggleOptions.onlyIncludeStatus && 
+                                    toggleOptions.statusFilter.length > 0 && 
+                                    !toggleOptions.statusFilter.includes(member.status);
+         return isManuallyExcluded || isExcludedByStatus;
+      }).length;
       
       onCountsChange({
-      members: membersCount,
-      excluded: excludedCount,
-      all: selectedMembers.length
-    });
-  // }, [selectedMembers, exclusions, onCountsChange]); // Dependencies for count updates
- }, [selectedMembers, exclusions, onCountsChange]); // Dependencies for count updates
+        members: membersCount,
+        excluded: excludedCount,
+        all: selectedMembers.length // 'all' count remains based on initial selections
+      });
+ }, [selectedMembers, exclusions, toggleOptions, onCountsChange]); // Dependencies for count updates
 
   const renderMembers = () => {
     if (filteredMembers.length === 0) {
@@ -342,15 +382,28 @@ const MemberTable: React.FC<MemberTableProps> = ({
             <div className="text-sm">{member.name}</div>
           </div>
           <div className="w-[120px] flex items-center justify-center">
-            <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
-              Active
+            <span className={`px-2 py-1 text-xs rounded-full ${
+              member.status === 'Active' ? 'bg-green-100 text-green-800' : 
+              member.status === 'Onboarding' ? 'bg-blue-100 text-blue-800' : 
+              member.status === 'On Leave' ? 'bg-yellow-100 text-yellow-800' : 
+              'bg-gray-100 text-gray-800' // Default/fallback
+            }`}>
+              {member.status || 'Unknown'} {/* Display assigned status */}
             </span>
           </div>
           <div className="w-20 text-center">
-            {exclusions.some(excl => excl.id === member.id) ? (
+            {/* Determine button state based on manual exclusions AND status filter */}
+             {(exclusions.some(excl => excl.id === member.id) || 
+               (toggleOptions.onlyIncludeStatus && toggleOptions.statusFilter.length > 0 && !toggleOptions.statusFilter.includes(member.status))) ? (
               <button
-                onClick={() => onInclude(member.id)}
+                onClick={() => {
+                  // Include should only remove manual exclusion, not override status filter
+                  onInclude(member.id); 
+                }}
+                // Disable include if they are excluded *only* by status filter? Or allow override?
+                // For now, allow override of manual exclusion. Status filter is handled by toggle.
                 className="px-2 py-1 text-xs font-medium rounded bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+                // disabled={!exclusions.some(excl => excl.id === member.id)} // Optional: disable if only excluded by status
               >
                 Include
               </button>
