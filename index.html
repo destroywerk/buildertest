@@ -153,81 +153,122 @@
         </aside>
         <main class="main-content">
             <div class="content-scrollable-area">
-                 <!-- Main app content (PeopleSelectorContent) goes here -->
-                 <!-- <h1>People Selector Content</h1> -->
+                 <div class="page-title">Select people</div> 
+                 
+                 <div class="people-selector-container"> 
+                     <div class="main-content-area">
+                         <!-- Left Column Content -->
+                         <div class="search-header">
+                             <div>
+                                <div class="search-title">Select members</div>
+                                <div class="search-subtitle">All selected items will be included in the group and automatically updated</div>
+                             </div>
+                             <button id="search-menu-btn" class="menu-btn">...</button> <!-- 3-dot menu -->
+                         </div>
 
-                 <div class="people-selector-content">
-                    <!-- Search and Selections Section -->
-                    <div class="search-selections-section">
-                        <div class="search-input-wrapper">
-                            <!-- SearchDropdown equivalent goes here -->
-                            <input type="text" placeholder="Search people, departments, positions..." id="main-search"/>
-                            <div id="search-results-dropdown" class="search-results-dropdown" style="display: none;">
-                                <!-- Search results populated by JS -->
+                         <div class="search-selections-section">
+                            <!-- Search input and selected items -->
+                            <div class="search-input-wrapper">
+                                 <span class="search-icon">🔍</span> <!-- Placeholder Icon -->
+                                <input type="text" placeholder="Add people, departments, teams, workplaces etc." id="main-search"/>
+                                <div id="search-results-dropdown" class="search-results-dropdown" style="display: none;">
+                                    <!-- Search results populated by JS -->
+                                </div>
                             </div>
-                        </div>
-                        <div class="selected-items-wrapper" id="selected-items">
-                            <!-- Selected items populated by JS -->
-                        </div>
-                    </div>
-
-                    <!-- Conditions Section -->
-                    <div class="conditions-section" id="conditions-section">
-                        <h2>Conditions</h2>
-                        <div id="conditions-list">
-                           <!-- Conditions populated by JS -->
-                        </div>
-                        <button id="add-condition-btn">+ Add Condition</button>
-                    </div>
-
-                    <!-- Exclusions Section -->
-                     <div class="exclusions-section" id="exclusions-section">
-                        <h2>Exclusions</h2>
-                        <div class="exclusion-search-wrapper">
-                            <input type="text" placeholder="Search people to exclude..." id="exclusion-search"/>
-                            <div id="exclusion-results-dropdown" class="search-results-dropdown" style="display: none;">
-                                <!-- Exclusion search results populated by JS -->
+                            <div class="selected-items-wrapper" id="selected-items">
+                                <!-- Selected items populated by JS -->
+                                 <span class="placeholder-text">No items selected</span>
                             </div>
+                         </div>
+    
+                         <div class="conditions-section" id="conditions-section" style="display: none;"> <!-- Hidden by default -->
+                            <!-- Conditions populated by JS -->
+                            <div id="conditions-list">
+                               <span class="placeholder-text">No conditions defined</span>
+                            </div>
+                            <button id="add-condition-btn">+ Add Condition</button>
                         </div>
-                         <div id="excluded-items-list" class="excluded-items-wrapper">
-                            <!-- Excluded items populated by JS -->
-                        </div>
+    
+                         <div class="exclusions-section" id="exclusions-section">
+                            <div class="exclusion-search-wrapper">
+                                <span class="search-icon">🔍</span> <!-- Placeholder Icon -->
+                                <input type="text" placeholder="Select people to exclude" id="exclusion-search"/>
+                                <div id="exclusion-results-dropdown" class="search-results-dropdown" style="display: none;">
+                                    <!-- Exclusion search results populated by JS -->
+                                </div>
+                                <!-- Tokens will be added here dynamically by JS later -->
+                            </div>
+                            <div id="excluded-items-list" class="excluded-items-wrapper" style="display:none;"> 
+                                <!-- Area for token display if not inside input -->
+                            </div>
+                         </div>
+    
+                         <div class="toggles-section" id="toggles-section">
+                             <!-- Toggles will be styled as switches -->
+                             <label class="toggle-switch">
+                                 <input type="checkbox" id="toggle-hire-date"> 
+                                 <span class="slider"></span>
+                                 Exclude people with hire date within <input type="number" value="6" class="toggle-value-input"> months
+                             </label>
+                              <label class="toggle-switch">
+                                 <input type="checkbox" id="toggle-external"> 
+                                 <span class="slider"></span>
+                                 Exclude external employees
+                             </label>
+                             <label class="toggle-switch">
+                                 <input type="checkbox" id="toggle-leave"> 
+                                 <span class="slider"></span>
+                                  Exclude employees on leave
+                             </label>
+                              <label class="toggle-switch">
+                                 <input type="checkbox" id="toggle-only-status"> 
+                                 <span class="slider"></span>
+                                  Only include people with status 
+                                  <select id="status-filter-select"><option>Onboarding</option></select> <!-- Placeholder -->
+                             </label>
+                         </div>
                      </div>
 
-                     <!-- Toggles Section -->
-                     <div class="toggles-section" id="toggles-section">
-                         <h2>Options</h2>
-                         <!-- Toggles will be added here -->
-                         <label><input type="checkbox" id="toggle-external"> Exclude external members</label>
-                         <label><input type="checkbox" id="toggle-leave"> Exclude members on leave</label>
-                         <!-- More toggles... -->
+                     <div class="member-list-area">
+                         <!-- Right Column Content: Tabs + Table -->
+                         <div class="tabs-section">
+                             <button class="tab-button active" data-tab="members">Members</button>
+                             <button class="tab-button" data-tab="excluded">Excluded</button>
+                             <button class="tab-button" data-tab="all">All</button>
+                             <span id="member-count-display" class="member-count-display"></span>
+                         </div>
+    
+                         <div class="member-table-section" id="member-table-section">
+                             <table id="member-table">
+                                 <thead>
+                                     <tr>
+                                         <th>Name</th>
+                                         <!-- <th>Position</th> -->
+                                         <!-- <th>Status</th> -->
+                                         <!-- <th>Department</th> -->
+                                         <!-- <th>Workplace</th> -->
+                                         <th class="action-header">Action</th>
+                                     </tr>
+                                 </thead>
+                                 <tbody id="member-table-body">
+                                     <!-- Table rows populated by JS -->
+                                     <!-- EMPTY STATE WILL BE HANDLED BY JS -->
+                                 </tbody>
+                             </table>
+                             <div id="member-table-empty-state" style="display: none;" class="empty-state-message">
+                                 <div class="empty-state-icon"> <!-- Placeholder --> </div>
+                                 <div>No members yet</div>
+                                 <div class="empty-state-subtitle">Search to add people, departments, workplaces, and more. <a href="#">Learn more</a>.</div>
+                             </div>
+                         </div>
+                         
                      </div>
-
-                     <!-- Tabs -->
-                     <div class="tabs-section">
-                         <button class="tab-button active" data-tab="members">Members</button>
-                         <button class="tab-button" data-tab="excluded">Excluded</button>
-                         <button class="tab-button" data-tab="all">All</button>
-                     </div>
-
-                     <!-- Member Table Section -->
-                     <div class="member-table-section" id="member-table-section">
-                         <table id="member-table">
-                             <thead>
-                                 <tr>
-                                     <th>Name</th>
-                                     <th>Position</th>
-                                     <th>Status</th>
-                                     <th>Department</th>
-                                     <th>Workplace</th>
-                                     <th>Action</th>
-                                 </tr>
-                             </thead>
-                             <tbody id="member-table-body">
-                                 <!-- Table rows populated by JS -->
-                             </tbody>
-                         </table>
-                     </div>
+                </div> 
+                 
+                 <!-- Footer Buttons -->
+                 <div class="page-footer">
+                     <button class="btn btn-secondary">Cancel</button>
+                     <button class="btn btn-primary">Save</button>
                  </div>
             </div>
         </main>

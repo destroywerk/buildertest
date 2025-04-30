@@ -1,0 +1,114 @@
+[
+  {
+    "name": "Margin",
+    "type": "FRAME",
+    "visible": true,
+    "x": 25180,
+    "y": -2297,
+    "width": 300,
+    "height": 244,
+    "rotation": 0,
+    "layout": {
+      "mode": "VERTICAL",
+      "padding": {
+        "top": 4,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      },
+      "itemSpacing": 0,
+      "primaryAxisAlignItems": "MIN",
+      "counterAxisAlignItems": "MIN",
+      "primaryAxisSizingMode": "AUTO",
+      "counterAxisSizingMode": "AUTO"
+    },
+    "opacity": 1,
+    "children": [
+      {
+        "name": "Hover Card",
+        "type": "FRAME",
+        "visible": true,
+        "x": 0,
+        "y": 4,
+        "width": 300,
+        "height": 240,
+        "rotation": 0,
+        "layout": {
+          "mode": "HORIZONTAL",
+          "padding": {
+            "top": 0,
+            "bottom": 0,
+            "left": 0,
+            "right": 0
+          },
+          "itemSpacing": 0,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN",
+          "primaryAxisSizingMode": "AUTO",
+          "counterAxisSizingMode": "AUTO"
+        },
+        "opacity": 1,
+        "fills": [
+          {
+            "type": "SOLID",
+            "color": "#FFFFFF",
+            "opacity": 1
+          }
+        ],
+        "effects": [
+          {
+            "type": "DROP_SHADOW",
+            "color": "#000000",
+            "opacity": 0.15,
+            "offset": {
+              "x": 0,
+              "y": 4
+            },
+            "radius": 12,
+            "spread": -4
+          },
+          {
+            "type": "DROP_SHADOW",
+            "color": "#000000",
+            "opacity": 0.15,
+            "offset": {
+              "x": 0,
+              "y": 16
+            },
+            "radius": 32,
+            "spread": 0
+          }
+        ],
+        "cornerRadius": 16,
+        "children": [
+          {
+            "name": "Content",
+            "type": "INSTANCE",
+            "visible": true,
+            "x": 0,
+            "y": 0,
+            "width": 300,
+            "height": 240,
+            "rotation": 0,
+            "layout": {
+              "mode": "VERTICAL",
+              "padding": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "itemSpacing": 0,
+              "primaryAxisAlignItems": "MIN",
+              "counterAxisAlignItems": "MIN",
+              "primaryAxisSizingMode": "AUTO",
+              "counterAxisSizingMode": "FIXED"
+            },
+            "opacity": 1,
+            "mainComponentName": "_Entity Hover Card Content"
+          }
+        ]
+      }
+    ]
+  }
+]

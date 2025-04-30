@@ -1,6 +1,8 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import ReactDOM from 'react-dom'; // Import ReactDOM for Portal
 import { Condition } from './PeopleSelectorContent';
 import { Member as BaseMember } from '../types/Member';
+import Hovercard from './Hovercard';
 
 interface Member extends BaseMember {
   added: boolean;
@@ -192,6 +194,12 @@ const MemberTable: React.FC<MemberTableProps> = ({
   onCountsChange,
   toggleOptions // Contains onlyIncludeStatus and statusFilter now
 }) => {
+  const [hoveredMemberId, setHoveredMemberId] = useState<number | null>(null);
+  const [hovercardPosition, setHovercardPosition] = useState<{ top: number; left: number } | null>(null);
+  const [isHovercardVisible, setIsHovercardVisible] = useState<boolean>(false);
+  const showTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   // Helper function to check if a member matches a condition
   const memberMatchesCondition = (member: Member, condition: Condition): boolean => {
     if (!condition.values || condition.values.length === 0) return true;
@@ -341,6 +349,62 @@ const MemberTable: React.FC<MemberTableProps> = ({
       });
  }, [selectedMembers, exclusions, toggleOptions, onCountsChange]); // Dependencies for count updates
 
+  const handleMouseEnter = (event: React.MouseEvent<HTMLDivElement>, memberId: number) => {
+    // console.log(`[Hover] MouseEnter on row for member ID: ${memberId}`);
+    if (hideTimeoutRef.current) {
+      clearTimeout(hideTimeoutRef.current);
+      hideTimeoutRef.current = null;
+    }
+    if (showTimeoutRef.current) {
+      clearTimeout(showTimeoutRef.current);
+    }
+
+    const targetElement = event.currentTarget;
+    showTimeoutRef.current = setTimeout(() => {
+      // console.log(`[Hover] Starting 1s show timer for member ID: ${memberId}`);
+      const rect = targetElement.getBoundingClientRect();
+      setHovercardPosition({ 
+        top: rect.top + 5, // Position relative to viewport top + small offset
+        left: rect.left + 5 // Position relative to viewport LEFT + small offset
+      });
+      setHoveredMemberId(memberId);
+      setIsHovercardVisible(true);
+      // console.log(`[Hover] Show timer completed. Set visible: true, memberId: ${memberId}, position:`, { top: rect.top + 5, left: rect.left + 5 });
+    }, 1000);
+  };
+
+  const handleMouseLeave = () => {
+    // console.log(`[Hover] MouseLeave from row.`);
+    if (showTimeoutRef.current) {
+      clearTimeout(showTimeoutRef.current);
+      showTimeoutRef.current = null;
+    }
+    // console.log(`[Hover] Starting 200ms hide timer.`);
+    hideTimeoutRef.current = setTimeout(() => {
+      setIsHovercardVisible(false);
+      setHoveredMemberId(null);
+      setHovercardPosition(null);
+      // console.log(`[Hover] Hide timer completed. Set visible: false`);
+    }, 200);
+  };
+  
+  const handleHovercardMouseEnter = () => {
+    // console.log(`[Hover] MouseEnter on Hovercard.`);
+    if (hideTimeoutRef.current) {
+      clearTimeout(hideTimeoutRef.current);
+      hideTimeoutRef.current = null;
+    }
+  };
+
+  const handleHovercardMouseLeave = () => {
+    // console.log(`[Hover] MouseLeave from Hovercard.`);
+    hideTimeoutRef.current = setTimeout(() => {
+      setIsHovercardVisible(false);
+      setHoveredMemberId(null);
+      setHovercardPosition(null);
+    }, 200);
+  };
+
   const renderMembers = () => {
     if (filteredMembers.length === 0) {
       return (
@@ -362,7 +426,9 @@ const MemberTable: React.FC<MemberTableProps> = ({
     return filteredMembers.map((member) => (
       <div
         key={member.id}
-        className="px-4 py-1.5 border-b border-gray-200 hover:bg-gray-50"
+        className="px-4 py-1.5 border-b border-gray-200 hover:bg-gray-50 cursor-default"
+        onMouseEnter={(e) => handleMouseEnter(e, member.id)}
+        onMouseLeave={handleMouseLeave}
       >
         <div className="flex items-center">
           <div className="w-10">
@@ -378,7 +444,9 @@ const MemberTable: React.FC<MemberTableProps> = ({
               </div>
             )}
           </div>
-          <div className="flex-grow pl-0">
+          <div 
+            className="flex-grow pl-0" 
+          >
             <div className="text-sm">{member.name}</div>
           </div>
           <div className="w-[120px] flex items-center justify-center">
@@ -427,9 +495,27 @@ const MemberTable: React.FC<MemberTableProps> = ({
     ));
   };
 
+  const memberForHovercard = useMemo(() => {
+    if (!hoveredMemberId) return null;
+    return memberData.find(m => m.id === hoveredMemberId);
+  }, [hoveredMemberId]);
+
   return (
-    <div className="h-full">
+    <div className="h-full"> {/* Removed relative positioning */} 
       {renderMembers()}
+
+      {/* Render Hovercard using Portal */}
+      {isHovercardVisible && memberForHovercard && hovercardPosition &&
+        ReactDOM.createPortal(
+          <Hovercard 
+            member={memberForHovercard} 
+            position={hovercardPosition} 
+            onMouseEnter={handleHovercardMouseEnter} 
+            onMouseLeave={handleHovercardMouseLeave} 
+          />,
+          document.body // Mount directly to body
+        )
+      }
     </div>
   );
 };

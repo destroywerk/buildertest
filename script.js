@@ -18,6 +18,7 @@ let activeTab = 'members'; // State for active tab ('members', 'excluded', 'all'
 let hoverTimeout = null;
 let hideTimeout = null;
 let hoveredMemberId = null;
+let activePickerTab = 'people'; // State for search picker tab
 
 // --- OPTIONS DATA (Should match original app) ---
 const conditionFieldOptions = [
@@ -59,6 +60,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const excludedItemsContainer = document.getElementById('excluded-items-list');
     const tabButtons = document.querySelectorAll('.tab-button');
     const hovercardElement = document.getElementById('hovercard');
+    const memberTableEmptyState = document.getElementById('member-table-empty-state');
+    const memberCountDisplay = document.getElementById('member-count-display');
+    const searchMenuButton = document.getElementById('search-menu-btn');
+    const exclusionSearchWrapper = exclusionSearchInput?.parentElement; // Get the wrapper
     // ... (add other elements as needed)
 
     // --- DATA LOADING --- 
@@ -166,140 +171,169 @@ document.addEventListener('DOMContentLoaded', async () => {
         return name.split(' ').map(n => n[0]).join('').toUpperCase();
     }
 
-    // Function to render the member table
+    // Updated function to render the member table
     function renderMemberTable(membersToRender) {
-        if (!memberTableBody) return;
+        if (!memberTableBody || !memberTableEmptyState) return;
 
         memberTableBody.innerHTML = ''; // Clear existing table rows
 
-        membersToRender.forEach(member => {
-            const row = document.createElement('tr');
-            // Add hover listeners to the row
-            row.addEventListener('mouseenter', (e) => handleTableRowMouseEnter(e, member.id));
-            row.addEventListener('mouseleave', handleTableRowMouseLeave);
-
-            // Name Cell (with avatar/initials)
-            const nameCell = document.createElement('td');
-            const avatarContainer = document.createElement('div');
-            avatarContainer.style.display = 'flex';
-            avatarContainer.style.alignItems = 'center';
-
-            const avatarElement = document.createElement('div');
-            avatarElement.style.width = '2rem';
-            avatarElement.style.height = '2rem';
-            avatarElement.style.borderRadius = '50%';
-            avatarElement.style.marginRight = '0.75rem';
-            avatarElement.style.display = 'flex';
-            avatarElement.style.alignItems = 'center';
-            avatarElement.style.justifyContent = 'center';
-            avatarElement.style.fontSize = '0.875rem';
-            avatarElement.style.fontWeight = '500';
-            avatarElement.style.color = 'white';
-            avatarElement.style.backgroundColor = '#a5b4fc'; // Example bg
-
-            if (member.avatar) {
-                const img = document.createElement('img');
-                img.src = member.avatar;
-                img.alt = member.name;
-                img.style.width = '100%';
-                img.style.height = '100%';
-                img.style.borderRadius = '50%';
-                img.style.objectFit = 'cover';
-                avatarElement.appendChild(img);
-            } else {
-                avatarElement.textContent = getInitials(member.name);
-                 // Add simple color hashing based on name for initials background
-                let hash = 0;
-                for (let i = 0; i < member.name.length; i++) {
-                    hash = member.name.charCodeAt(i) + ((hash << 5) - hash);
-                }
-                const color = `hsl(${hash % 360}, 70%, 70%)`;
-                avatarElement.style.backgroundColor = color;
-            }
-
-            avatarContainer.appendChild(avatarElement);
-            avatarContainer.appendChild(document.createTextNode(member.name));
-            nameCell.appendChild(avatarContainer);
-
-            // Other Cells
-            const positionCell = document.createElement('td');
-            positionCell.textContent = member.position || 'N/A';
-
-            const statusCell = document.createElement('td');
-            const statusBadge = document.createElement('span');
-            statusBadge.classList.add('status-badge');
-            statusBadge.classList.add(`status-${(member.status || 'unknown').toLowerCase().replace(/\s+/g, '-')}`);
-            statusBadge.textContent = member.status || 'Unknown';
-            statusCell.appendChild(statusBadge);
-
-            const departmentCell = document.createElement('td');
-            departmentCell.textContent = member.department || 'N/A';
-
-            const workplaceCell = document.createElement('td');
-            workplaceCell.textContent = member.workplace || 'N/A';
-
-            // Action Cell
-            const actionCell = document.createElement('td');
-            const actionButton = document.createElement('button');
-            actionButton.dataset.memberId = member.id; // Store original member ID
-            actionButton.classList.add('table-action-btn') // Add class for styling
-
-            if (activeTab === 'excluded') {
-                actionButton.textContent = 'Include';
-                actionButton.addEventListener('click', handleIncludeMember); 
-            } else {
-                // Check if already excluded
-                const isExcluded = exclusions.some(ex => ex.originalId === member.id);
-                if (isExcluded) {
-                    actionButton.textContent = 'Included'; // Or maybe hide button?
-                    actionButton.disabled = true;
-                } else {
-                    actionButton.textContent = 'Exclude';
-                    actionButton.addEventListener('click', handleExcludeMember); 
-                }
-            }
-            actionCell.appendChild(actionButton);
-
-            // Append cells to row
-            row.appendChild(nameCell);
-            row.appendChild(positionCell);
-            row.appendChild(statusCell);
-            row.appendChild(departmentCell);
-            row.appendChild(workplaceCell);
-            row.appendChild(actionCell);
-
-            // Append row to table body
-            memberTableBody.appendChild(row);
-        });
+        if (membersToRender.length === 0) {
+            memberTableEmptyState.style.display = 'block'; // Show empty state message
+            memberTableBody.style.display = 'none';
+        } else {
+            memberTableEmptyState.style.display = 'none'; // Hide empty state message
+            memberTableBody.style.display = ''; // Show table body (default display)
+            membersToRender.forEach(member => {
+                 const row = document.createElement('tr');
+                 // Add hover listeners to the row
+                 row.addEventListener('mouseenter', (e) => handleTableRowMouseEnter(e, member.id));
+                 row.addEventListener('mouseleave', handleTableRowMouseLeave);
+                 
+                 // Name Cell (with avatar/initials)
+                 const nameCell = document.createElement('td');
+                 const avatarContainer = document.createElement('div');
+                 avatarContainer.style.display = 'flex';
+                 avatarContainer.style.alignItems = 'center';
+     
+                 const avatarElement = document.createElement('div');
+                 // Use class for styling now
+                 avatarElement.classList.add('table-avatar-container'); 
+                 if (member.avatar) {
+                     const img = document.createElement('img');
+                     img.src = member.avatar;
+                     img.alt = member.name;
+                     img.classList.add('table-avatar-img');
+                     avatarElement.appendChild(img);
+                 } else {
+                     avatarElement.classList.add('table-avatar-initials');
+                     avatarElement.textContent = getInitials(member.name);
+                     let hash = 0;
+                     for (let i = 0; i < member.name.length; i++) {
+                         hash = member.name.charCodeAt(i) + ((hash << 5) - hash);
+                     }
+                     const color = `hsl(${hash % 360}, 70%, 60%)`; // Adjusted saturation/lightness
+                     avatarElement.style.backgroundColor = color;
+                 }
+     
+                 avatarContainer.appendChild(avatarElement);
+                 const nameText = document.createElement('span');
+                 nameText.textContent = member.name;
+                 nameText.classList.add('table-member-name');
+                 avatarContainer.appendChild(nameText);
+                 nameCell.appendChild(avatarContainer);
+     
+                 // Action Cell
+                 const actionCell = document.createElement('td');
+                 const actionButton = document.createElement('button');
+                 actionButton.dataset.memberId = member.id; 
+                 actionButton.classList.add('table-action-btn') 
+     
+                 if (activeTab === 'excluded') {
+                     actionButton.textContent = 'Include';
+                     actionButton.addEventListener('click', handleIncludeMember); 
+                 } else {
+                     const isExcluded = exclusions.some(ex => ex.originalId === member.id);
+                     if (isExcluded) {
+                         actionButton.textContent = 'Include'; // Change label to Include if excluded
+                         actionButton.addEventListener('click', handleIncludeMember); 
+                     } else {
+                         actionButton.textContent = 'Exclude';
+                         actionButton.addEventListener('click', handleExcludeMember); 
+                     }                 
+                 }
+                 actionCell.appendChild(actionButton);
+                 actionCell.classList.add('action-cell'); // Add class for text-align right if needed
+     
+                 // Append cells to row
+                 row.appendChild(nameCell);
+                 // Only Name and Action columns now
+                 // row.appendChild(positionCell);
+                 // row.appendChild(statusCell);
+                 // row.appendChild(departmentCell);
+                 // row.appendChild(workplaceCell);
+                 row.appendChild(actionCell);
+     
+                 // Append row to table body
+                 memberTableBody.appendChild(row);
+            });
+        }
+        updateMemberCount(membersToRender.length);
     }
 
-    // Function to render selected items
+    // Updated Function to render selected items as blocks
     function renderSelections() {
         if (!selectedItemsContainer) return;
         selectedItemsContainer.innerHTML = ''; // Clear
         
         if (selections.length === 0) {
-            selectedItemsContainer.innerHTML = '<span class="placeholder-text">No items selected</span>'; // Show placeholder
+             // No placeholder needed here now based on new design
+            // selectedItemsContainer.innerHTML = '<span class="placeholder-text">No items selected</span>'; 
             return;
         }
 
         selections.forEach(item => {
-            const pill = document.createElement('div');
-            pill.classList.add('selected-item-pill');
-            pill.dataset.itemId = item.id;
+            const block = document.createElement('div');
+            block.classList.add('selected-entity-block');
+            block.dataset.itemId = item.id;
 
-            const nameSpan = document.createElement('span');
-            nameSpan.textContent = item.name;
-            pill.appendChild(nameSpan);
+            const iconContainer = document.createElement('div');
+            iconContainer.classList.add('entity-icon-container');
+            // TODO: Add specific icons based on item.type
+            iconContainer.innerHTML = getEntityIcon(item.type); // Placeholder function
+            
+            const infoContainer = document.createElement('div');
+            infoContainer.classList.add('entity-info');
+            const nameDiv = document.createElement('div');
+            nameDiv.classList.add('entity-name');
+            nameDiv.textContent = item.name;
+            const typeDiv = document.createElement('div');
+            typeDiv.classList.add('entity-type');
+            typeDiv.textContent = item.type; // Or a more user-friendly type name
+            infoContainer.appendChild(nameDiv);
+            infoContainer.appendChild(typeDiv);
+
+            const actionsContainer = document.createElement('div');
+            actionsContainer.classList.add('entity-actions');
+
+            // Only show "Add condition" for non-person types initially
+            if (item.type !== 'person') {
+                const addConditionBtn = document.createElement('button');
+                addConditionBtn.classList.add('btn-add-condition');
+                addConditionBtn.textContent = '+ Add condition';
+                addConditionBtn.addEventListener('click', handleConvertEntityToCondition);
+                actionsContainer.appendChild(addConditionBtn);
+            }
 
             const removeBtn = document.createElement('button');
-            removeBtn.classList.add('remove-selection-btn');
-            removeBtn.textContent = '×'; // Multiplication sign for X
+            removeBtn.classList.add('btn-remove-entity');
+            removeBtn.textContent = '×'; // Use multiplication sign or an SVG icon
             removeBtn.addEventListener('click', handleRemoveSelection);
-            pill.appendChild(removeBtn);
+            actionsContainer.appendChild(removeBtn);
 
-            selectedItemsContainer.appendChild(pill);
+            block.appendChild(iconContainer);
+            block.appendChild(infoContainer);
+            block.appendChild(actionsContainer);
+
+            selectedItemsContainer.appendChild(block);
         });
+    }
+
+    // Helper to get icons (replace with actual SVGs)
+    function getEntityIcon(type) {
+        switch(type) {
+            case 'person': return '👤'; 
+            case 'department': return '🏢';
+            case 'position': return '🏷️';
+            case 'workplace': return '📍';
+            default: return '❔';
+        }
+    }
+
+    // Function to update member count display
+    function updateMemberCount(count) {
+        if (memberCountDisplay) {
+            memberCountDisplay.textContent = count;
+        }
     }
 
     // Function to render conditions
@@ -402,36 +436,73 @@ document.addEventListener('DOMContentLoaded', async () => {
                  updateCondition(condition.id, 'values', selectedValues);
              });
 
+             // Make the whole container clickable to open the dropdown
+             const choicesInner = valueContainer.querySelector('.choices__inner');
+             if (choicesInner) {
+                 choicesInner.addEventListener('click', (event) => {
+                    // Prevent the click from propagating to the input or remove button
+                    if (event.target.closest('.choices__button') || event.target.matches('.choices__input')) {
+                        return;
+                    }
+                    choicesInstance.showDropdown(); 
+                 });
+             }
+
         });
     }
 
-    // Function to render excluded items
+    // Updated Function to render excluded items as tokens inside the input wrapper
     function renderExclusions() {
-        if (!excludedItemsContainer) return;
-        excludedItemsContainer.innerHTML = ''; // Clear
+        if (!exclusionSearchWrapper || !exclusionSearchInput) return;
+
+        // Remove existing tokens first
+        exclusionSearchWrapper.querySelectorAll('.excluded-item-token').forEach(el => el.remove());
+
+        let hasTokens = false;
+        if (exclusions.length > 0) {
+            hasTokens = true;
+            exclusions.forEach(item => {
+                const token = document.createElement('div');
+                token.classList.add('excluded-item-token');
+                token.dataset.itemId = item.id; 
+
+                // Small avatar/initials (optional)
+                const avatar = document.createElement('span');
+                avatar.classList.add('token-avatar');
+                if (item.avatar) {
+                    avatar.innerHTML = `<img src="${item.avatar}" alt="">`;
+                } else {
+                    avatar.textContent = getInitials(item.name).substring(0,2);
+                    // Add color hashing maybe?
+                }
+                token.appendChild(avatar);
+
+                const nameSpan = document.createElement('span');
+                nameSpan.classList.add('token-name');
+                nameSpan.textContent = item.name;
+                token.appendChild(nameSpan);
+
+                const removeBtn = document.createElement('button');
+                removeBtn.classList.add('remove-exclusion-token-btn');
+                removeBtn.textContent = '×'; 
+                removeBtn.addEventListener('click', handleRemoveExclusion);
+                token.appendChild(removeBtn);
+
+                // Insert token BEFORE the input element
+                exclusionSearchWrapper.insertBefore(token, exclusionSearchInput);
+            });
+        }
         
-        if (exclusions.length === 0) {
-            excludedItemsContainer.innerHTML = '<span class="placeholder-text">No people excluded</span>';
-            return;
+        // Add/remove class for styling input when tokens are present
+        if (hasTokens) {
+            exclusionSearchWrapper.classList.add('has-tokens');
+        } else {
+            exclusionSearchWrapper.classList.remove('has-tokens');
         }
 
-        exclusions.forEach(item => {
-            const pill = document.createElement('div');
-            pill.classList.add('excluded-item-pill');
-            pill.dataset.itemId = item.id; // Use the unique person ID (e.g., person-X)
-
-            const nameSpan = document.createElement('span');
-            nameSpan.textContent = item.name;
-            pill.appendChild(nameSpan);
-
-            const removeBtn = document.createElement('button');
-            removeBtn.classList.add('remove-exclusion-btn');
-            removeBtn.textContent = '×'; 
-            removeBtn.addEventListener('click', handleRemoveExclusion);
-            pill.appendChild(removeBtn);
-
-            excludedItemsContainer.appendChild(pill);
-        });
+        // Clear the input field after adding/removing tokens
+        exclusionSearchInput.value = '';
+        exclusionSearchInput.placeholder = hasTokens ? '' : 'Select people to exclude';
     }
 
     // --- FILTERING LOGIC --- 
@@ -526,69 +597,185 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderMemberTable(filteredMembers);
     }
 
-    // --- EVENT HANDLERS --- 
-    function handleSearchInput(event) {
-        const query = event.target.value.toLowerCase().trim();
-        
+    // Function to render the search dropdown (either picker or results)
+    function renderSearchDropdown(query = '') {
+        if (!searchResultsDropdown) return;
+        searchResultsDropdown.innerHTML = ''; // Clear
+
+        if (query.length === 0) {
+            // Render Entity Picker View
+            renderEntityPicker();
+            searchResultsDropdown.style.display = 'block';
+        } else {
+            // Render Filtered Results View
+            renderFilteredSearchResults(query);
+             // Display is handled within renderFilteredSearchResults
+        }
+    }
+
+    // Function to render the initial entity picker
+    function renderEntityPicker() {
         if (!searchResultsDropdown) return;
 
-        if (query.length < 1) { // Hide dropdown if query is short
-            searchResultsDropdown.style.display = 'none';
-            searchResultsDropdown.innerHTML = '';
-            return;
+        const pickerTabsHTML = `
+            <div class="search-picker-tabs">
+                <button data-tab="people" class="${activePickerTab === 'people' ? 'active' : ''}">People</button>
+                <button data-tab="departments" class="${activePickerTab === 'departments' ? 'active' : ''}">Departments</button>
+                <button data-tab="workplaces" class="${activePickerTab === 'workplaces' ? 'active' : ''}">Workplaces</button>
+                <button data-tab="positions" class="${activePickerTab === 'positions' ? 'active' : ''}">Positions</button>
+            </div>
+        `;
+
+        let itemsToShow = [];
+        const selectedIds = new Set(selections.map(s => s.id)); // Exclude selected
+        const excludedIds = new Set(exclusions.map(e => e.id)); // Exclude excluded people
+
+        switch (activePickerTab) {
+            case 'people': 
+                itemsToShow = allSearchableItems.filter(item => item.type === 'person' && !selectedIds.has(item.id) && !excludedIds.has(item.id)).slice(0, 10);
+                break;
+            case 'departments': 
+                itemsToShow = allSearchableItems.filter(item => item.type === 'department' && !selectedIds.has(item.id)).slice(0, 10);
+                break;
+            case 'workplaces': 
+                 itemsToShow = allSearchableItems.filter(item => item.type === 'workplace' && !selectedIds.has(item.id)).slice(0, 10);
+                break;
+            case 'positions': 
+                 itemsToShow = allSearchableItems.filter(item => item.type === 'position' && !selectedIds.has(item.id)).slice(0, 10);
+                break;
         }
 
-        // Filter items (excluding already selected ones)
-        const selectedIds = new Set(selections.map(s => s.id));
-        const filteredItems = allSearchableItems.filter(item => 
-            !selectedIds.has(item.id) && 
-            item.name.toLowerCase().includes(query)
-            // Add more search criteria if needed (e.g., search description)
-        ).slice(0, 10); // Limit results
+        searchResultsDropdown.innerHTML = `
+            ${pickerTabsHTML}
+            <div class="search-picker-content">
+                 ${renderSearchResultItems(itemsToShow)} 
+            </div>
+        `;
+        
+        // Add listeners after rendering
+        addDropdownItemListeners();
+        addPickerTabListeners();
+    }
 
-        // Render results
-        searchResultsDropdown.innerHTML = ''; // Clear previous results
-        if (filteredItems.length > 0) {
-            filteredItems.forEach(item => {
-                const itemElement = document.createElement('div');
-                itemElement.textContent = `${item.name} (${item.description || item.type})`; // Example display
-                itemElement.classList.add('search-result-item'); // Add class for styling/event delegation
-                itemElement.dataset.itemId = item.id; // Store ID to identify item on click
-                itemElement.addEventListener('click', handleSearchResultClick);
-                searchResultsDropdown.appendChild(itemElement);
-            });
+    // Function to render filtered search results (grouped)
+    function renderFilteredSearchResults(query) {
+        if (!searchResultsDropdown) return;
+        
+        const lowerQuery = query.toLowerCase();
+        const selectedIds = new Set(selections.map(s => s.id));
+        
+        const filtered = { people: [], departments: [], positions: [], workplaces: [] };
+        
+        allSearchableItems.forEach(item => {
+             if (!selectedIds.has(item.id) && item.name.toLowerCase().includes(lowerQuery)) {
+                 if (filtered[item.type + 's']) { // Check if category exists
+                     filtered[item.type + 's'].push(item);
+                 }
+             }
+        });
+
+        let resultsHTML = '';
+        let totalResults = 0;
+        
+        if (filtered.people.length > 0) {
+            resultsHTML += `<div class="search-group-header">People</div>${renderSearchResultItems(filtered.people.slice(0,5))}`;
+            totalResults += filtered.people.length;
+        }
+        if (filtered.departments.length > 0) {
+             resultsHTML += `<div class="search-group-header">Departments</div>${renderSearchResultItems(filtered.departments.slice(0,3))}`;
+             totalResults += filtered.departments.length;
+        }
+        if (filtered.positions.length > 0) {
+             resultsHTML += `<div class="search-group-header">Positions</div>${renderSearchResultItems(filtered.positions.slice(0,3))}`;
+             totalResults += filtered.positions.length;
+        }
+         if (filtered.workplaces.length > 0) {
+             resultsHTML += `<div class="search-group-header">Workplaces</div>${renderSearchResultItems(filtered.workplaces.slice(0,3))}`;
+             totalResults += filtered.workplaces.length;
+        }
+
+        searchResultsDropdown.innerHTML = resultsHTML;
+
+        if (totalResults > 0) {
             searchResultsDropdown.style.display = 'block';
+             addDropdownItemListeners();
         } else {
             searchResultsDropdown.style.display = 'none';
         }
     }
 
-    function handleSearchResultClick(event) {
-        const itemId = event.currentTarget.dataset.itemId;
-        const itemToAdd = allSearchableItems.find(item => item.id === itemId);
-        
-        if (itemToAdd && !selections.some(s => s.id === itemToAdd.id)) {
-            selections.push(itemToAdd);
-            renderSelections();
-            // Clear search input and hide dropdown
-            if (mainSearchInput) mainSearchInput.value = '';
-            if (searchResultsDropdown) searchResultsDropdown.style.display = 'none';
-            filterAndRenderTable(); // Trigger filter
-            console.log('Added selection:', itemToAdd);
-        }
+    // Helper to render a list of items for the dropdown
+    function renderSearchResultItems(items) {
+        return items.map(item => `
+            <div class="search-result-item" data-item-id="${item.id}">
+                 <span class="result-item-icon">${getEntityIcon(item.type)}</span> 
+                 <span class="result-item-name">${item.name}</span>
+                 <span class="result-item-desc">${item.description || ''}</span>
+             </div>
+        `).join('');
     }
 
-    function handleRemoveSelection(event) {
-        const pillElement = event.target.closest('.selected-item-pill');
-        if (!pillElement) return;
-
-        const itemIdToRemove = pillElement.dataset.itemId;
-        selections = selections.filter(item => item.id !== itemIdToRemove);
-        
-        renderSelections(); // Re-render the pills
-        filterAndRenderTable(); // Trigger filter
-        console.log('Removed selection:', itemIdToRemove);
+    // Updated helper to add listeners
+    function addDropdownItemListeners() {
+        searchResultsDropdown?.querySelectorAll('.search-result-item').forEach(el => {
+            // Remove existing listener before adding new one to prevent duplicates
+            el.removeEventListener('click', handleSearchResultClick);
+            el.addEventListener('click', handleSearchResultClick);
+        });
     }
+
+    // Helper to add listeners to picker tabs
+    function addPickerTabListeners() {
+        searchResultsDropdown?.querySelectorAll('.search-picker-tabs button').forEach(el => {
+             el.removeEventListener('click', handlePickerTabClick);
+             el.addEventListener('click', handlePickerTabClick);
+        });
+    }
+
+    // --- EVENT HANDLERS --- 
+
+     function handleSearchInput(event) {
+         const query = event.target.value.trim();
+         renderSearchDropdown(query);
+     }
+ 
+     function handleSearchBlur(event) {
+         setTimeout(() => {
+             // Check if the focus is moving to an item within the dropdown
+             const relatedTarget = event.relatedTarget;
+             if (searchResultsDropdown && !searchResultsDropdown.contains(relatedTarget)) {
+                  searchResultsDropdown.style.display = 'none';
+              }
+          }, 150); // Delay allows click on dropdown item
+     }
+ 
+     function handleSearchFocus() {
+         // Show picker immediately on focus if input is empty
+         if (mainSearchInput && mainSearchInput.value.trim().length === 0) {
+             renderSearchDropdown();
+         }
+     }
+
+     // Update to use the item found in allSearchableItems directly
+     function handleSearchResultClick(event) {
+         const itemId = event.currentTarget.dataset.itemId;
+         const itemToAdd = allSearchableItems.find(item => item.id === itemId);
+         
+         // Ensure not already selected
+         if (itemToAdd && !selections.some(s => s.id === itemToAdd.id)) { 
+             selections.push(itemToAdd);
+             renderSelections();
+             if (mainSearchInput) mainSearchInput.value = '';
+             if (searchResultsDropdown) searchResultsDropdown.style.display = 'none';
+             filterAndRenderTable(); // Trigger filter
+             console.log('Added selection:', itemToAdd);
+         } else if (itemToAdd) {
+             console.log('Item already selected:', itemToAdd);
+             // Maybe provide feedback? For now, just close dropdown.
+              if (mainSearchInput) mainSearchInput.value = '';
+             if (searchResultsDropdown) searchResultsDropdown.style.display = 'none';
+         }
+     }
 
     function handleAddCondition() {
         const newCondition = {
@@ -710,40 +897,40 @@ document.addEventListener('DOMContentLoaded', async () => {
          if (itemToAdd && itemToAdd.type === 'person' && !exclusions.some(ex => ex.id === itemToAdd.id)) {
              exclusions.push(itemToAdd);
              renderExclusions();
-             if (exclusionSearchInput) exclusionSearchInput.value = '';
              if (exclusionResultsDropdown) exclusionResultsDropdown.style.display = 'none';
              filterAndRenderTable();
              console.log('Added exclusion:', itemToAdd);
          }
     }
 
+    // Updated to work with tokens
     function handleRemoveExclusion(event) {
-        const pillElement = event.target.closest('.excluded-item-pill');
-        if (!pillElement) return;
+        const tokenElement = event.target.closest('.excluded-item-token');
+        if (!tokenElement) return;
 
-        const itemIdToRemove = pillElement.dataset.itemId;
+        const itemIdToRemove = tokenElement.dataset.itemId;
         exclusions = exclusions.filter(item => item.id !== itemIdToRemove);
         
-        renderExclusions();
+        renderExclusions(); // Re-render tokens (will remove the clicked one)
         filterAndRenderTable();
         console.log('Removed exclusion:', itemIdToRemove);
     }
 
     function handleExcludeMember(event) {
-         const memberId = parseInt(event.target.dataset.memberId, 10);
-         const member = memberData.find(m => m.id === memberId);
-         if (!member) return;
-         
-         // Find the corresponding item in allSearchableItems
-         const uniqueId = `person-${member.id}`;
-         const itemToAdd = allSearchableItems.find(item => item.id === uniqueId);
+        const memberId = parseInt(event.target.dataset.memberId, 10);
+        const member = memberData.find(m => m.id === memberId);
+        if (!member) return;
+        
+        // Find the corresponding item in allSearchableItems
+        const uniqueId = `person-${member.id}`;
+        const itemToAdd = allSearchableItems.find(item => item.id === uniqueId);
 
-         if (itemToAdd && !exclusions.some(ex => ex.id === itemToAdd.id)) {
-             exclusions.push(itemToAdd);
-             renderExclusions();
-             filterAndRenderTable(); // Re-render table with updated exclusions
-             console.log('Excluded member from table:', itemToAdd);
-         }
+        if (itemToAdd && !exclusions.some(ex => ex.id === itemToAdd.id)) {
+            exclusions.push(itemToAdd);
+            renderExclusions();
+            filterAndRenderTable(); // Re-render table with updated exclusions
+            console.log('Excluded member from table:', itemToAdd);
+        }
     }
 
     function handleIncludeMember(event) {
@@ -932,19 +1119,83 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, 200); 
      }
 
+    function handleConvertEntityToCondition(event) {
+        const blockElement = event.target.closest('.selected-entity-block');
+        if (!blockElement) return;
+        const itemId = blockElement.dataset.itemId;
+        const selectionIndex = selections.findIndex(s => s.id === itemId);
+        if (selectionIndex === -1) return;
+
+        const item = selections[selectionIndex];
+
+        // Remove from selections
+        selections.splice(selectionIndex, 1);
+
+        // Add to conditions (pre-filled)
+        const newCondition = {
+            id: nextConditionId++, // Ensure unique ID
+            field: item.type, // e.g., 'department'
+            operator: 'is', // Default operator
+            values: [item.originalName || item.name] // Use original name if available
+        };
+        conditions.push(newCondition);
+
+        // Re-render both sections and filter table
+        renderSelections();
+        renderConditions();
+        filterAndRenderTable();
+        console.log('Converted selection to condition:', newCondition);
+    }
+
+    // Modified handler to get ID from the block
+     function handleRemoveSelection(event) {
+        const blockElement = event.target.closest('.selected-entity-block');
+        if (!blockElement) return;
+
+        const itemIdToRemove = blockElement.dataset.itemId;
+        selections = selections.filter(item => item.id !== itemIdToRemove);
+        
+        renderSelections(); // Re-render the pills/blocks
+        filterAndRenderTable(); // Trigger filter
+        console.log('Removed selection:', itemIdToRemove);
+    }
+
+    function handleSearchMenuClick() {
+        // Simple toggle for now
+        // TODO: Implement a proper dropdown menu if more options are needed
+        if (conditionsListContainer) { // Check if the element exists
+            const isHidden = conditionsListContainer.parentElement.style.display === 'none';
+            conditionsListContainer.parentElement.style.display = isHidden ? 'block' : 'none';
+            
+            // Optionally add a default condition if shown and empty
+            if (isHidden && conditions.length === 0) {
+                // handleAddCondition(); // Or maybe just show the empty state
+            }
+        }
+    }
+
+    // Handler for picker tab clicks
+    function handlePickerTabClick(event) {
+        const newTab = event.target.dataset.tab;
+        if (newTab && newTab !== activePickerTab) {
+            activePickerTab = newTab;
+            renderEntityPicker(); // Re-render the picker with the new active tab
+        }
+    }
+
     // --- INITIALIZATION --- 
     await loadData();
     if (memberData.length > 0) {
-        renderMemberTable(memberData);
+        // renderMemberTable(memberData); // Don't render full table initially
         renderSelections();
         renderConditions(); 
-        renderExclusions(); // Initial render
+        renderExclusions(); 
+        filterAndRenderTable(); // Call filter which should result in empty table initially
     } else {
-        console.log("No member data loaded, cannot render table.")
-        // Optionally display a message in the table body
-        if (memberTableBody) {
-            memberTableBody.innerHTML = '<tr><td colspan="6">Failed to load member data.</td></tr>';
-        }
+        // ... error handling ...
+        memberTableEmptyState.style.display = 'block';
+        memberTableBody.style.display = 'none';
+         updateMemberCount(0);
     }
 
     // --- EVENT LISTENERS --- 
@@ -973,5 +1224,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (hovercardElement) {
         hovercardElement.addEventListener('mouseenter', handleHovercardMouseEnter);
         hovercardElement.addEventListener('mouseleave', handleHovercardMouseLeave);
+    }
+    if (searchMenuButton) {
+        searchMenuButton.addEventListener('click', handleSearchMenuClick);
     }
 }); 

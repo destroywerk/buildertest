@@ -1,9 +1,11 @@
 /* Basic Reset & Styling */
 body {
-    font-family: sans-serif;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    background-color: #f1f2f4; /* Light gray background like screenshot */
+    color: #333; /* Default text color */
 }
 
 *, *:before, *:after {
@@ -12,11 +14,11 @@ body {
 
 /* Add component styles below */ 
 
-/* Layout Styles */
+/* Layout Styles - Updated */
 .app-container {
     display: flex;
-    height: 100vh; /* h-screen */
-    background-color: #f9fafb; /* bg-gray-50 */
+    height: 100vh; 
+    /* Remove background color from here */
 }
 
 .sidebar {
@@ -28,6 +30,7 @@ body {
     background-image: linear-gradient(to bottom, #f5f3ff, #ede9fe); /* from-purple-50 to-purple-100 */
     border-right: 1px solid #e5e7eb; /* border-r border-gray-200 */
     padding: 0; /* Reset padding added earlier */
+    flex-shrink: 0; /* Prevent sidebar from shrinking */
 }
 
 .sidebar-header {
@@ -130,17 +133,823 @@ body {
     color: #111827; /* text-gray-900 */
 }
 
-.main-content {
-    flex: 1; /* flex-1 */
-    overflow: hidden; /* overflow-hidden */
-    display: flex; /* flex */
-    flex-direction: column; /* flex-col */
+.main-content { /* Was previously the container, now just the flex child */
+    flex: 1; 
+    overflow: hidden; 
+    display: flex; 
+    flex-direction: column; 
+    background-color: #f1f2f4; /* Match body background */
 }
 
-.content-scrollable-area {
-    flex: 1; /* flex-1 */
-    overflow-y: auto; /* overflow-y-auto */
-    padding: 1rem; /* Add some padding */
+.content-scrollable-area { /* Inner scrollable area */
+    flex: 1; 
+    overflow-y: auto; 
+    padding: 2rem; /* More padding */
+}
+
+.page-title {
+    font-size: 1.25rem; /* text-xl */
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    color: #111827;
+}
+
+.people-selector-container { /* The main white panel */
+    display: flex;
+    gap: 1.5rem; /* Space between columns */
+    background-color: white;
+    padding: 1.5rem;
+    border-radius: 0.75rem; /* rounded-xl */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    flex-grow: 1; /* Allow it to grow vertically if content is short */
+}
+
+.main-content-area { /* Left Column */
+    flex: 1; /* Take available space */
+    min-width: 0; /* Prevent overflow */
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem; /* Space between sections */
+}
+
+.member-list-area { /* Right Column */
+    flex-basis: 350px; /* Fixed width for member list */
+    flex-shrink: 0;
+    border-left: 1px solid #e5e7eb; /* Separator */
+    padding-left: 1.5rem;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Search Header */
+.search-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.search-title {
+    font-size: 1rem; /* text-base */
+    font-weight: 600;
+    color: #111827;
+}
+
+.search-subtitle {
+    font-size: 0.875rem; /* text-sm */
+    color: #6b7280; /* text-gray-500 */
+    margin-top: 0.25rem;
+}
+
+.menu-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #6b7280;
+    padding: 0 0.25rem;
+    line-height: 1; /* Adjust for vertical alignment */
+}
+
+/* Search Input Styling */
+.search-input-wrapper,
+.exclusion-search-wrapper {
+    position: relative;
+    display: flex; /* To position icon */
+    align-items: center;
+}
+
+.search-input-wrapper .search-icon,
+.exclusion-search-wrapper .search-icon {
+    position: absolute;
+    left: 0.85rem; /* Adjust as needed */
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af; /* gray-400 */
+    pointer-events: none; /* Allow clicking through icon */
+    font-size: 1rem; /* Adjust icon size */
+}
+
+#main-search, #exclusion-search {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 2.5rem; /* Taller padding, left padding for icon */
+    border: 1px solid #d1d5db; /* border-gray-300 */
+    border-radius: 1.25rem; /* 20px */
+    font-size: 0.9rem;
+    line-height: 1.5;
+    background-color: white;
+}
+
+#main-search::placeholder, #exclusion-search::placeholder {
+     color: #9ca3af;
+}
+
+#main-search:focus, #exclusion-search:focus {
+    outline: none;
+    border-color: #a5b4fc; /* indigo-300 */
+    box-shadow: 0 0 0 2px #c7d2fe; /* indigo-100 focus ring */
+}
+
+/* Adjust dropdown position based on new input height */
+.search-results-dropdown {
+    top: calc(100% + 4px); /* Position below input */
+    /* Add other dropdown styles if needed */
+    border-radius: 0.5rem; 
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); 
+    max-height: 300px;
+    /* Keep existing styles */
+    position: absolute;
+    width: 100%;
+    border: 1px solid #d1d5db;
+    border-top: none;
+    background-color: white;
+    overflow-y: auto;
+    z-index: 10;
+}
+
+.search-result-item {
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    /* border-bottom: 1px solid #eee; */ /* Remove bottom border */
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.search-result-item:hover {
+    background-color: #f3f4f6; /* Lighter gray for hover */
+}
+
+.result-item-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    /* Add background/color based on type if needed */
+}
+
+.result-item-name {
+    font-size: 0.875rem;
+    color: #1f2937;
+    font-weight: 500;
+    flex-grow: 1;
+}
+
+.result-item-desc {
+    font-size: 0.75rem;
+    color: #6b7280;
+    white-space: nowrap;
+}
+
+.selected-items-wrapper {
+    border: none; /* Remove placeholder border */
+    padding: 0; /* Remove padding */
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column; /* Stack entity blocks */
+    gap: 0.75rem;
+}
+
+.placeholder-text {
+    color: #9ca3af; /* gray-400 */
+    font-style: italic;
+}
+
+.selected-item-pill {
+    display: inline-flex; /* Use inline-flex */
+    align-items: center;
+    background-color: #e0e7ff; /* indigo-100 */
+    color: #4338ca; /* indigo-800 */
+    border-radius: 9999px; /* rounded-full */
+    padding: 0.25rem 0.75rem; /* py-1 px-3 */
+    font-size: 0.875rem; /* text-sm */
+    font-weight: 500;
+    white-space: nowrap; /* Prevent wrapping within pill */
+}
+
+.remove-selection-btn {
+    background: none;
+    border: none;
+    color: #4338ca; /* indigo-800 */
+    margin-left: 0.5rem;
+    padding: 0;
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+.remove-selection-btn:hover {
+    color: #3730a3; /* indigo-900 */
+}
+
+.conditions-section,
+.exclusions-section,
+.toggles-section,
+.tabs-section,
+.member-table-section {
+    margin-bottom: 0; /* Remove margin, rely on gap */
+}
+
+h2 {
+    font-size: 1.125rem; /* text-lg */
+    font-weight: 600; /* font-semibold */
+    margin-bottom: 0.75rem;
+}
+
+#conditions-list,
+#excluded-items-list {
+     border: none;
+     padding: 0;
+     margin-top: 0;
+     /* Tokens will go inside input wrapper */
+}
+
+.condition-row {
+    background-color: white; /* White background for rows inside */
+    border: 1px solid #d1d5db;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.condition-row select,
+.condition-row input {
+    padding: 0.3rem 0.5rem;
+    border: 1px solid #d1d5db; /* border-gray-300 */
+    border-radius: 4px;
+    font-size: 0.875rem;
+}
+
+.condition-row .condition-field {
+    flex-basis: 150px; /* Adjust as needed */
+}
+
+.condition-row .condition-operator {
+     flex-basis: 100px; /* Adjust as needed */
+}
+
+.condition-row .condition-value {
+    flex-grow: 1; /* Take remaining space */
+    /* Needs specific styling if it becomes a multi-select */
+}
+
+.condition-row .remove-condition-btn {
+    background: none;
+    border: none;
+    color: #ef4444; /* red-500 */
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 0 0.3rem;
+    line-height: 1;
+}
+
+.condition-row .remove-condition-btn:hover {
+     color: #dc2626; /* red-600 */
+}
+
+/* Style the container for Choices.js */
+.condition-value-container {
+    flex-grow: 1; /* Take remaining space */
+    min-width: 150px; /* Ensure it has some base width */
+}
+
+/* You might need more specific Choices.js overrides here */
+/* Example: Adjust height or borders */
+.condition-value-container .choices {
+     font-size: 0.875rem;
+     min-height: auto; /* Override default min-height if needed */
+}
+
+.condition-value-container .choices__inner {
+    min-height: auto;
+    padding: 0.2rem 0.5rem; /* Adjust padding */
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    background-color: white;
+    cursor: pointer; /* Make it look clickable */
+}
+
+/* Hide default dropdown arrow */
+.condition-value-container .choices__inner::after {
+    display: none;
+}
+
+.condition-value-container .choices.is-open .choices__inner {
+     border-radius: 4px 4px 0 0; /* Adjust rounding when open */
+     border-bottom-color: transparent;
+}
+
+.condition-value-container .choices__list--dropdown {
+    border: 1px solid #d1d5db; 
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    margin-top: -1px; /* Overlap border */
+    font-size: 0.875rem;
+}
+
+.condition-value-container .choices__list--dropdown .choices__item--selectable.is-highlighted {
+    background-color: #eef2ff; /* Indigo-50 */
+}
+
+.condition-value-container .choices__input {
+     font-size: 0.875rem;
+     background-color: white; /* Ensure input bg matches */
+     margin-bottom: 0; /* Adjust spacing */
+}
+
+.condition-value-container .choices[data-type*="select-multiple"] .choices__button,
+.condition-value-container .choices[data-type*="text"] .choices__button {
+    border-left: 1px solid #a1a1aa; /* zinc-400 Example */
+    margin-left: 4px;
+    padding-left: 6px;
+}
+
+#add-condition-btn {
+    /* Basic button styling */
+    padding: 0.3rem 0.8rem;
+    border: 1px solid #ccc;
+    background-color: #f0f0f0;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.toggles-section label {
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.tabs-section {
+    border-bottom: 1px solid #d1d5db;
+}
+
+.tab-button {
+    padding: 0.5rem 1rem;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-weight: 500;
+    color: #6b7280; /* text-gray-500 */
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px; /* Align border */
+}
+
+.tab-button.active {
+    color: #4f46e5; /* text-indigo-600 */
+    border-bottom-color: #4f46e5; /* border-indigo-500 */
+}
+
+#member-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#member-table th, #member-table td {
+    border: none;
+    border-bottom: 1px solid #e5e7eb; /* Only bottom border for rows */
+    padding: 0.5rem 0.75rem; /* Adjust padding */
+}
+
+#member-table tr:last-child td {
+    border-bottom: none; /* No border for last row */
+}
+
+#member-table th {
+    background-color: #f9fafb; 
+    font-weight: 500; 
+    font-size: 0.75rem; /* Smaller header */
+    text-transform: uppercase;
+    color: #6b7280;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+}
+
+#member-table th.action-header {
+    text-align: right;
+}
+
+#member-table td {
+    font-size: 0.875rem; 
+}
+
+#member-table tbody tr {
+    background-color: white;
+}
+
+#member-table tbody tr:hover {
+     background-color: #f9fafb; /* Subtle hover */
+}
+
+.table-action-btn {
+    float: right; /* Align button right */
+}
+
+.empty-state-message {
+    padding: 2rem;
+    text-align: center;
+    color: #6b7280;
+}
+
+.empty-state-icon {
+    width: 3rem; 
+    height: 3rem; 
+    border: 2px dashed #d1d5db; 
+    border-radius: 0.5rem; 
+    margin: 0 auto 0.75rem auto; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Add actual icon later */
+}
+
+.empty-state-subtitle {
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+}
+
+.empty-state-subtitle a {
+    color: #4f46e5;
+    text-decoration: none;
+}
+.empty-state-subtitle a:hover {
+    text-decoration: underline;
+}
+
+
+/* Footer Buttons */
+.page-footer {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    flex-shrink: 0; /* Prevent footer shrinking */
+}
+
+.btn {
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    border: 1px solid transparent;
+    font-weight: 500;
+    cursor: pointer;
+    font-size: 0.875rem;
+}
+
+.btn-secondary {
+    background-color: white;
+    border-color: #d1d5db;
+    color: #374151;
+}
+.btn-secondary:hover {
+     background-color: #f9fafb;
+}
+
+.btn-primary {
+    background-color: #4f46e5; /* Indigo */
+    color: white;
+}
+.btn-primary:hover {
+    background-color: #4338ca;
+}
+
+/* Hovercard Styles */
+.hovercard {
+    /* From: absolute z-20 bg-white rounded-3xl shadow-xl p-4 w-72 border border-gray-100 */
+    /* Position is set via JS style */
+    z-index: 20;
+    background-color: white;
+    border-radius: 1.5rem; /* rounded-3xl */
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-xl */
+    padding: 1rem; /* p-4 */
+    width: 18rem; /* w-72 */
+    border: 1px solid #f3f4f6; /* border-gray-100 */
+    /* Add transitions if desired */
+    transition: opacity 0.1s ease-in-out;
+}
+
+.hovercard-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem; /* mb-4 */
+}
+
+.hovercard-avatar {
+    width: 3.5rem; /* w-14 */
+    height: 3.5rem; /* h-14 */
+    border-radius: 9999px; /* rounded-full */
+    margin-right: 0.75rem; /* mr-3 */
+}
+
+.hovercard-avatar-initials {
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 9999px;
+    margin-right: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #e5e7eb; /* bg-gray-200 */
+    font-size: 1.25rem; /* text-xl */
+    color: #4b5563; /* text-gray-600 */
+    font-weight: 500;
+}
+
+.hovercard-name {
+    font-weight: 600; /* font-semibold */
+    font-size: 1rem; /* text-base */
+    color: #1f2937; /* text-gray-800 */
+    margin-bottom: 0.1rem;
+}
+
+.hovercard-position {
+    font-size: 0.875rem; /* text-sm */
+    color: #6b7280; /* text-gray-500 */
+}
+
+.hovercard-details {
+    margin-bottom: 1rem; /* mb-4 */
+    font-size: 0.875rem; /* text-sm */
+    color: #374151; /* text-gray-700 */
+    space-y: 0.625rem; /* space-y-2.5 - approximate */
+}
+
+.hovercard-details > div {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.625rem; /* Approximation for space-y */
+}
+
+.hovercard-details > div:last-child {
+    margin-bottom: 0;
+}
+
+.hovercard-details svg {
+    width: 1rem; /* w-4 */
+    height: 1rem; /* h-4 */
+    margin-right: 0.5rem; /* mr-2 */
+    color: #9ca3af; /* text-gray-400 */
+    flex-shrink: 0;
+}
+
+.hovercard-details .detail-badge {
+    background-color: #f3f4f6; /* bg-gray-100 */
+    color: #374151; /* text-gray-700 */
+    padding: 0.125rem 0.5rem; /* px-2 py-0.5 */
+    border-radius: 0.375rem; /* rounded-md */
+    font-size: 0.75rem; /* text-xs */
+}
+
+.hovercard-actions {
+    display: flex;
+    gap: 0.5rem; /* space-x-2 */
+}
+
+.hovercard-action-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.375rem 0.75rem; /* px-3 py-1.5 */
+    background-color: white;
+    border: 1px solid #d1d5db; /* border-gray-300 */
+    border-radius: 0.5rem; /* rounded-lg */
+    font-size: 0.875rem; /* text-sm */
+    color: #374151; /* text-gray-700 */
+    cursor: pointer;
+}
+
+.hovercard-action-btn:hover {
+    background-color: #f9fafb; /* hover:bg-gray-50 */
+}
+
+.hovercard-action-btn svg {
+    width: 1rem; /* w-4 */
+    height: 1rem; /* h-4 */
+    margin-right: 0.375rem; /* mr-1.5 */
+}
+
+/* Member List Area */
+.member-list-area .tabs-section {
+    padding-bottom: 0.5rem; /* Space below tabs */
+    margin-bottom: 0.5rem;
+    flex-shrink: 0;
+    display: flex; /* Align count */
+    align-items: center;
+    border-bottom: 1px solid #e5e7eb; /* Match original */
+}
+
+.member-list-area .tab-button {
+    padding: 0.25rem 0.5rem; /* Smaller tab padding */
+    font-size: 0.875rem; /* text-sm */
+    margin-bottom: -1px; /* Align border */
+    border: none; 
+    background: none;
+    cursor: pointer;
+    font-weight: 500;
+    color: #6b7280;
+    border-bottom: 2px solid transparent;
+}
+.member-list-area .tab-button.active {
+    color: #374151; /* Darker gray for active */
+    border-bottom-color: #374151;
+}
+
+.member-count-display {
+    margin-left: auto; /* Push count to the right */
+    font-size: 0.875rem;
+    color: #6b7280;
+    background-color: #f3f4f6; /* Gray background */
+    padding: 0.1rem 0.4rem;
+    border-radius: 0.25rem;
+    font-weight: 500;
+}
+
+.member-table-section {
+    flex-grow: 1;
+    overflow-y: auto; /* Scrollable table area */
+    margin-bottom: 0; /* Remove margin */
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    background-color: white; /* Ensure white background */
+}
+
+#member-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: none; /* Remove outer table border */
+}
+
+#member-table th, #member-table td {
+    border: none;
+    border-bottom: 1px solid #e5e7eb; /* Only bottom border for rows */
+    padding: 0.6rem 0.75rem; /* Adjust padding */
+    text-align: left;
+    vertical-align: middle;
+}
+
+#member-table tr:last-child td {
+    border-bottom: none; /* No border for last row */
+}
+
+#member-table th {
+    background-color: #f9fafb; 
+    font-weight: 500; 
+    font-size: 0.75rem; /* Smaller header */
+    text-transform: uppercase;
+    color: #6b7280;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+}
+
+#member-table th.action-header {
+    text-align: right;
+}
+
+#member-table td {
+    font-size: 0.875rem; 
+    color: #1f2937; /* Darker text */
+}
+
+#member-table tbody tr {
+    background-color: white;
+}
+
+#member-table tbody tr:hover {
+     background-color: #f9fafb; /* Subtle hover */
+}
+
+.table-action-btn {
+    float: right; /* Align button right */
+     /* Keep existing styles */
+    padding: 0.2rem 0.6rem;
+    border: 1px solid #d1d5db; 
+    background-color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    color: #374151;
+}
+.table-action-btn:hover {
+     background-color: #f9fafb;
+     border-color: #adb5bd;
+}
+.table-action-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+    background-color: #f3f4f6; 
+}
+
+.empty-state-message {
+    padding: 3rem 1rem; /* More padding */
+    text-align: center;
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+.empty-state-icon {
+    width: 3rem; 
+    height: 3rem; 
+    border: 2px dashed #e5e7eb; 
+    border-radius: 0.5rem; 
+    margin: 0 auto 1rem auto; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9ca3af;
+    /* Add actual icon later using SVG */
+}
+
+.empty-state-subtitle {
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+    color: #6b7280;
+}
+
+.empty-state-subtitle a {
+    color: #4f46e5;
+    text-decoration: none;
+    font-weight: 500;
+}
+.empty-state-subtitle a:hover {
+    text-decoration: underline;
+}
+
+/* Toggle Switches Styling */
+.toggles-section {
+    padding-top: 0.5rem; /* Add some space above toggles */
+}
+
+.toggle-switch {
+  display: flex; 
+  align-items: center;
+  position: relative;
+  margin-bottom: 1rem; /* More space between toggles */
+  color: #374151; 
+  font-size: 0.875rem;
+}
+
+.toggle-switch input[type="checkbox"] {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute; /* Take out of layout flow */
+}
+
+.slider {
+  position: relative; 
+  cursor: pointer;
+  background-color: #ccc;
+  transition: .4s;
+  width: 34px; 
+  height: 18px; 
+  border-radius: 18px; 
+  margin-right: 0.75rem; 
+  flex-shrink: 0;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 12px; 
+  width: 12px;
+  left: 3px; 
+  bottom: 3px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+input:checked + .slider {
+  background-color: #4f46e5; /* Indigo */
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 0 2px #c7d2fe; /* Focus ring */
+}
+
+input:checked + .slider:before {
+  transform: translateX(16px); /* Move knob to the right */
+}
+
+.toggle-switch .toggle-value-input {
+    width: 50px;
+    margin: 0 0.5rem;
+    padding: 0.2rem 0.4rem;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    text-align: center;
+}
+
+.toggle-switch #status-filter-select {
+     margin-left: 0.5rem;
+     padding: 0.2rem 0.4rem;
+     border: 1px solid #d1d5db;
+     border-radius: 4px;
+     font-size: 0.875rem;
+     background-color: white;
 }
 
 /* Sidebar Items */
@@ -247,15 +1056,38 @@ body {
 .search-result-item {
     padding: 0.5rem 0.75rem;
     cursor: pointer;
-    border-bottom: 1px solid #eee;
-}
-
-.search-result-item:last-child {
-    border-bottom: none;
+    /* border-bottom: 1px solid #eee; */ /* Remove bottom border */
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .search-result-item:hover {
-    background-color: #f0f0f0;
+    background-color: #f3f4f6; /* Lighter gray for hover */
+}
+
+.result-item-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    /* Add background/color based on type if needed */
+}
+
+.result-item-name {
+    font-size: 0.875rem;
+    color: #1f2937;
+    font-weight: 500;
+    flex-grow: 1;
+}
+
+.result-item-desc {
+    font-size: 0.75rem;
+    color: #6b7280;
+    white-space: nowrap;
 }
 
 .selected-items-wrapper {
@@ -388,10 +1220,34 @@ h2 {
 
 .condition-value-container .choices__inner {
     min-height: auto;
-    padding: 0.2rem 0.5rem; /* Adjust padding to match other inputs */
+    padding: 0.2rem 0.5rem; /* Adjust padding */
     border: 1px solid #d1d5db;
     border-radius: 4px;
     background-color: white;
+    cursor: pointer; /* Make it look clickable */
+}
+
+/* Hide default dropdown arrow */
+.condition-value-container .choices__inner::after {
+    display: none;
+}
+
+.condition-value-container .choices.is-open .choices__inner {
+     border-radius: 4px 4px 0 0; /* Adjust rounding when open */
+     border-bottom-color: transparent;
+}
+
+.condition-value-container .choices__list--dropdown {
+    border: 1px solid #d1d5db; 
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    margin-top: -1px; /* Overlap border */
+    font-size: 0.875rem;
+}
+
+.condition-value-container .choices__list--dropdown .choices__item--selectable.is-highlighted {
+    background-color: #eef2ff; /* Indigo-50 */
 }
 
 .condition-value-container .choices__input {
@@ -467,203 +1323,197 @@ h2 {
 /* Add styling for exclusion search wrapper */
 .exclusion-search-wrapper {
      position: relative; /* For dropdown positioning */
+     display: flex;
+     flex-wrap: wrap; /* Allow tokens to wrap */
+     align-items: center;
+     padding-left: 2.5rem; /* Space for icon */
+     padding-right: 0.5rem; /* Space on right */
+     padding-top: 0.3rem; /* Padding for tokens */
+     padding-bottom: 0.3rem;
+     border: 1px solid #d1d5db; 
+     border-radius: 1.25rem; 
+     background-color: white;
+     gap: 0.3rem; /* Gap between tokens */
 }
 
-/* Reuse pill styling for excluded items */
-.excluded-item-pill {
+/* Hide the icon when tokens are present? Or adjust padding */
+.exclusion-search-wrapper.has-tokens .search-icon {
+    /* display: none; */ 
+}
+
+.exclusion-search-wrapper #exclusion-search {
+    border: none; /* Input has no border itself */
+    outline: none;
+    padding: 0.45rem 0; /* Vertical padding to align text */
+    margin: 0;
+    flex-grow: 1; /* Takes remaining space */
+    min-width: 150px; /* Ensure it doesn't get too small */
+    border-radius: 0;
+    box-shadow: none;
+    background-color: transparent;
+    height: auto; /* Allow height to be determined by content */
+    line-height: 1.5;
+}
+
+/* Adjust wrapper focus style */
+.exclusion-search-wrapper:focus-within {
+     border-color: #a5b4fc; 
+     box-shadow: 0 0 0 2px #c7d2fe; 
+}
+
+/* Exclusion Token Styling */
+.excluded-item-token {
     display: inline-flex;
     align-items: center;
-    background-color: #fee2e2; /* red-100 */
-    color: #b91c1c; /* red-800 */
-    border-radius: 9999px;
-    padding: 0.25rem 0.75rem;
-    font-size: 0.875rem;
+    background-color: #e5e7eb; /* gray-200 */
+    color: #374151; /* gray-700 */
+    border-radius: 0.75rem; /* Needs to match input radius for effect */
+    padding: 0.15rem 0.25rem 0.15rem 0.5rem; /* Adjust padding */
+    font-size: 0.8rem; 
     font-weight: 500;
     white-space: nowrap;
+    gap: 0.25rem;
 }
 
-.remove-exclusion-btn {
+.token-avatar {
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    background-color: #ccc;
+    color: white;
+    overflow: hidden;
+}
+
+.token-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.token-name {
+    /* Style if needed */
+}
+
+.remove-exclusion-token-btn {
     background: none;
     border: none;
-    color: #b91c1c; /* red-800 */
-    margin-left: 0.5rem;
+    color: #6b7280; 
+    margin-left: 0.25rem;
     padding: 0;
     cursor: pointer;
-    font-size: 1.1rem;
+    font-size: 1rem;
     line-height: 1;
+    font-weight: bold;
 }
 
-.remove-exclusion-btn:hover {
-     color: #991b1b; /* red-900 */
+.remove-exclusion-token-btn:hover {
+     color: #1f2937;
 }
 
-.status-badge {
-    display: inline-block;
-    padding: 0.15rem 0.5rem;
-    border-radius: 9999px; /* rounded-full */
-    font-size: 0.75rem; /* text-xs */
-    font-weight: 600; /* font-semibold */
-    text-transform: capitalize;
-    white-space: nowrap;
-}
-
-/* Example status colors - adjust to match original */
-.status-active {
-    background-color: #d1fae5; /* green-100 */
-    color: #047857; /* green-800 */
-}
-
-.status-onboarding {
-    background-color: #ffedd5; /* orange-100 */
-    color: #9a3412; /* orange-800 */
-}
-
-.status-on-leave {
-    background-color: #e0f2fe; /* sky-100 */
-    color: #075985; /* sky-800 */
-}
-
-.status-terminated {
-    background-color: #fee2e2; /* red-100 */
-    color: #991b1b; /* red-800 */
-}
-
-.status-unknown {
-    background-color: #e5e7eb; /* gray-200 */
-    color: #4b5563; /* gray-600 */
-}
-
-.table-action-btn {
-    padding: 0.2rem 0.6rem;
-    border: 1px solid #d1d5db; /* gray-300 */
-    background-color: white;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.8rem;
-}
-
-.table-action-btn:hover {
-     background-color: #f9fafb; /* gray-50 */
-}
-
-.table-action-btn:disabled {
-    cursor: not-allowed;
-    opacity: 0.6;
-    background-color: #f3f4f6; /* gray-100 */
-}
-
-/* Hovercard Styles */
-.hovercard {
-    /* From: absolute z-20 bg-white rounded-3xl shadow-xl p-4 w-72 border border-gray-100 */
-    /* Position is set via JS style */
-    z-index: 20;
-    background-color: white;
-    border-radius: 1.5rem; /* rounded-3xl */
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-xl */
-    padding: 1rem; /* p-4 */
-    width: 18rem; /* w-72 */
-    border: 1px solid #f3f4f6; /* border-gray-100 */
-    /* Add transitions if desired */
-    transition: opacity 0.1s ease-in-out;
-}
-
-.hovercard-header {
-    display: flex;
-    align-items: center;
-    margin-bottom: 1rem; /* mb-4 */
-}
-
-.hovercard-avatar {
-    width: 3.5rem; /* w-14 */
-    height: 3.5rem; /* h-14 */
-    border-radius: 9999px; /* rounded-full */
-    margin-right: 0.75rem; /* mr-3 */
-}
-
-.hovercard-avatar-initials {
-    width: 3.5rem;
-    height: 3.5rem;
-    border-radius: 9999px;
-    margin-right: 0.75rem;
+/* Table Avatar/Name Styling */
+.table-avatar-container {
+    width: 1.5rem; /* w-6 */
+    height: 1.5rem; /* h-6 */
+    border-radius: 50%;
+    margin-right: 0.5rem; /* mr-2 */
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #e5e7eb; /* bg-gray-200 */
-    font-size: 1.25rem; /* text-xl */
-    color: #4b5563; /* text-gray-600 */
+    font-size: 0.75rem; /* text-xs */
     font-weight: 500;
-}
-
-.hovercard-name {
-    font-weight: 600; /* font-semibold */
-    font-size: 1rem; /* text-base */
-    color: #1f2937; /* text-gray-800 */
-    margin-bottom: 0.1rem;
-}
-
-.hovercard-position {
-    font-size: 0.875rem; /* text-sm */
-    color: #6b7280; /* text-gray-500 */
-}
-
-.hovercard-details {
-    margin-bottom: 1rem; /* mb-4 */
-    font-size: 0.875rem; /* text-sm */
-    color: #374151; /* text-gray-700 */
-    space-y: 0.625rem; /* space-y-2.5 - approximate */
-}
-
-.hovercard-details > div {
-    display: flex;
-    align-items: center;
-    margin-bottom: 0.625rem; /* Approximation for space-y */
-}
-
-.hovercard-details > div:last-child {
-    margin-bottom: 0;
-}
-
-.hovercard-details svg {
-    width: 1rem; /* w-4 */
-    height: 1rem; /* h-4 */
-    margin-right: 0.5rem; /* mr-2 */
-    color: #9ca3af; /* text-gray-400 */
+    color: white;
+    background-color: #a5b4fc; /* Default bg */
+    overflow: hidden; /* Clip image */
     flex-shrink: 0;
 }
 
-.hovercard-details .detail-badge {
-    background-color: #f3f4f6; /* bg-gray-100 */
-    color: #374151; /* text-gray-700 */
-    padding: 0.125rem 0.5rem; /* px-2 py-0.5 */
-    border-radius: 0.375rem; /* rounded-md */
-    font-size: 0.75rem; /* text-xs */
+.table-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
-.hovercard-actions {
-    display: flex;
-    gap: 0.5rem; /* space-x-2 */
+.table-member-name {
+    line-height: 1.5rem; /* Align with avatar */
 }
 
-.hovercard-action-btn {
-    flex: 1;
+/* Align action cell content right */
+.action-cell {
+    text-align: right;
+}
+
+/* Empty State Styling */
+.empty-state-message {
+    padding: 3rem 1rem; /* More padding */
+    text-align: center;
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+.empty-state-icon {
+    width: 3rem; 
+    height: 3rem; 
+    border: 2px dashed #e5e7eb; 
+    border-radius: 0.5rem; 
+    margin: 0 auto 1rem auto; 
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0.375rem 0.75rem; /* px-3 py-1.5 */
-    background-color: white;
-    border: 1px solid #d1d5db; /* border-gray-300 */
-    border-radius: 0.5rem; /* rounded-lg */
-    font-size: 0.875rem; /* text-sm */
-    color: #374151; /* text-gray-700 */
+    color: #9ca3af;
+    /* Add actual icon later using SVG */
+}
+
+.empty-state-subtitle {
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+    color: #6b7280;
+}
+
+.empty-state-subtitle a {
+    color: #4f46e5;
+    text-decoration: none;
+    font-weight: 500;
+}
+.empty-state-subtitle a:hover {
+    text-decoration: underline;
+}
+
+/* Search Dropdown Picker/Results Styling */
+.search-picker-tabs {
+    display: flex;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 0 0.5rem; /* Padding around tabs */
+}
+
+.search-picker-tabs button {
+    padding: 0.5rem 0.75rem;
+    border: none;
+    background: none;
     cursor: pointer;
+    font-weight: 500;
+    font-size: 0.875rem;
+    color: #6b7280; 
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px; /* Overlap border */
 }
 
-.hovercard-action-btn:hover {
-    background-color: #f9fafb; /* hover:bg-gray-50 */
+.search-picker-tabs button.active {
+    color: #374151;
+    border-bottom-color: #4f46e5; /* Indigo */
 }
 
-.hovercard-action-btn svg {
-    width: 1rem; /* w-4 */
-    height: 1rem; /* h-4 */
-    margin-right: 0.375rem; /* mr-1.5 */
+.search-picker-content {
+    padding: 0.5rem 0; /* Padding above/below items */
+}
+
+.search-group-header {
+    font-size: 0.75rem; /* text-xs */
+    font-weight: 600;
+    color: #6b7280; /* gray-500 */
+    padding: 0.5rem 0.75rem 0.25rem 0.75rem;
+    text-transform: uppercase;
 } 
