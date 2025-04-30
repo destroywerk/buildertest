@@ -835,61 +835,33 @@ body {
 .condition-value-container .choices {
      font-size: 0.875rem;
      min-height: auto;
+     position: relative; /* Needed for dropdown positioning */
 }
 
 .condition-value-container .choices__inner {
-    min-height: 32px; /* Ensure minimum height */
-    padding: 2px 5px; /* Adjust padding - smaller vertical */
+    min-height: 32px; /* Match other inputs */
+    padding: 2px 5px; 
     border: 1px solid #d1d5db;
     border-radius: 4px;
     background-color: white;
     cursor: pointer;
-    display: flex; /* Use flex for tokens */
-    flex-wrap: wrap; /* Allow tokens to wrap */
+    display: flex; 
+    flex-wrap: wrap; 
     gap: 4px;
 }
 
-/* Hide default dropdown arrow */
-.condition-value-container .choices__inner::after {
-    display: none;
-}
-
-.condition-value-container .choices.is-open .choices__inner {
-     border-radius: 4px 4px 0 0;
-     border-bottom-color: transparent;
-     box-shadow: 0 1px 2px rgba(0,0,0,0.05); /* Add slight shadow when open */
-}
-
-.condition-value-container .choices__list--dropdown {
-    border: 1px solid #d1d5db;
-    border-top: none;
-    border-radius: 0 0 4px 4px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    margin-top: -1px; /* Overlap border */
-    font-size: 0.875rem;
-    z-index: 11; /* Ensure dropdown is above others */
-}
-
-.condition-value-container .choices__list--dropdown .choices__item--selectable.is-highlighted {
-    background-color: #eef2ff; /* Indigo-50 */
-}
-
 /* Styling for the selected items (tokens) */
-.condition-value-container .choices__item--choice {
-     margin: 0; /* Reset margin */
-     padding: 0.25rem 0.5rem;
-}
-
 .condition-value-container .choices__item.is-selected {
-    display: inline-block; /* Make items behave like tokens */
+    display: inline-flex; /* Use inline-flex for better alignment */
+    align-items: center;
     padding: 2px 6px; /* Token padding */
     background-color: #e5e7eb; /* gray-200 */
     border: 1px solid #d1d5db; /* Add subtle border like screenshot */
     border-radius: 4px;
-    margin: 1px 2px; /* Adjust margin slightly */
+    margin: 1px 2px; 
     font-size: 0.8rem;
     color: #374151;
-    word-break: break-all; /* Prevent long tokens breaking layout */
+    word-break: break-all; 
 }
 
 /* Style remove button within token */
@@ -907,6 +879,11 @@ body {
     padding-left: 0;
     border-radius: 0;
     opacity: 0.7;
+    /* Required Choices.js override */
+    border: none;
+    background-color: transparent;
+    position: relative;
+    top: 0; right: 0; /* Reset potential positioning */
 }
 .condition-value-container .choices__item.is-selected .choices__button:hover,
 .condition-value-container .choices__item.is-selected .choices__button:focus {
@@ -914,14 +891,43 @@ body {
      background-color: transparent; /* Prevent hover background */
 }
 
+/* The actual input field */
 .condition-value-container .choices__input {
      font-size: 0.875rem;
-     background-color: white;
+     background-color: transparent; /* Should be transparent */
      margin: 0;
-     padding: 2px 0; /* Minimal padding */
+     padding: 2px 0; 
      height: auto;
-     flex-grow: 1; /* Allow input to take space */
-     min-width: 50px; /* Prevent input from becoming too small */
+     flex-grow: 1; 
+     min-width: 50px; 
+     border: none; /* Input itself has no border */
+     outline: none; /* No focus outline on input */
+     box-shadow: none; /* No shadow on input */
+}
+
+/* Dropdown list */
+.condition-value-container .choices__list--dropdown {
+    border: 1px solid #d1d5db; 
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    margin-top: -1px; /* Overlap border */
+    font-size: 0.875rem;
+    z-index: 11; 
+    position: absolute; /* Ensure absolute positioning */
+    width: 100%;
+    background-color: white;
+}
+
+/* Dropdown items */
+.condition-value-container .choices__list--dropdown .choices__item--choice {
+     padding: 0.4rem 0.8rem; /* Adjust padding */
+     margin: 0;
+}
+
+.condition-value-container .choices__list--dropdown .choices__item--selectable.is-highlighted {
+    background-color: #eef2ff; /* Indigo-50 */
+    color: #1f2937;
 }
 
 /* --- End Choices.js Token Styling --- */
@@ -1354,13 +1360,14 @@ input:checked + .slider:before {
     display: flex;
     justify-content: flex-end;
     gap: 0.75rem;
-    flex-shrink: 0; /* Prevent footer shrinking */
-    /* Sticky Footer Styles */
+    flex-shrink: 0; 
+    /* --- Sticky Footer Styles START --- */
     position: sticky;
     bottom: 0;
-    background-color: white; /* Or match the container background */
+    background-color: white; /* Ensures content doesn't show through */
     padding-bottom: 1.5rem; /* Add padding matching top */
-    z-index: 5; /* Ensure it's above scrolling content but below dropdowns */
+    z-index: 5; /* Above content, below modals/dropdowns */
+     /* --- Sticky Footer Styles END --- */
 }
 
 .btn {

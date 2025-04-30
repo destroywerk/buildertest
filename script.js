@@ -776,13 +776,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Function to initialize Choices.js on a select element
     function initializeChoices(selectElement) {
         const isConditionValueSelect = selectElement.classList.contains('condition-value-select');
+        // Destroy existing instance if it exists, to prevent errors on re-render
+        if (selectElement.choices) {
+             selectElement.choices.destroy();
+        }
         const choicesInstance = new Choices(selectElement, {
-             removeItemButton: true, // Show remove button on selected items (tokens)
+             removeItemButton: true, 
              placeholder: true,
              placeholderValue: 'Select value(s)...',
-             itemSelectText: '', // Remove "Press to select" text
-             allowHTML: false, // Prevent HTML injection in choices
-             // classNames specific to conditions for token styling
+             itemSelectText: '', 
+             allowHTML: false,
+             // Add shouldSort: false if options are pre-sorted and you want to keep that order
+             shouldSort: true, // Default sort - alphabetical is usually good here
              classNames: isConditionValueSelect ? {
                 containerOuter: 'choices condition-choices',
                 containerInner: 'choices__inner condition-choices__inner',
@@ -794,8 +799,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 containerInner: 'choices__inner',
              }
          });
+         // Store instance on element for potential future access/destruction
+         selectElement.choices = choicesInstance;
          
-         // Add event listener for Choices.js changes
+         // Event listener (uses ruleId and blockId from dataset)
          selectElement.addEventListener('change', (event) => {
              const selectedValues = Array.from(event.target.selectedOptions).map(option => option.value);
              const ruleId = parseInt(event.target.dataset.ruleId, 10);
@@ -806,7 +813,7 @@ document.addEventListener('DOMContentLoaded', async () => {
              }
          });
 
-         // Make the whole container clickable to open the dropdown (for conditions)
+         // Click listener for dropdown opening (for condition values)
          if (isConditionValueSelect) {
              const choicesOuter = selectElement.closest('.choices');
              const choicesInner = choicesOuter?.querySelector('.choices__inner');
@@ -850,8 +857,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Updated Function to render excluded items as tokens inside the input wrapper
     function renderExclusions() {
         if (!exclusionSearchWrapper || !exclusionSearchInput) return;
-
-        // Remove existing tokens first
+        
+        // --- FIX: Clear only tokens, not the input --- 
         exclusionSearchWrapper.querySelectorAll('.excluded-item-token').forEach(el => el.remove());
 
         let hasTokens = false;
@@ -874,21 +881,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 removeBtn.addEventListener('click', handleRemoveExclusion);
                 token.appendChild(removeBtn);
 
-                // Insert token BEFORE the input element
+                // *** Insert BEFORE the input element ***
                 exclusionSearchWrapper.insertBefore(token, exclusionSearchInput);
             });
         }
         
-        // Add/remove class for styling input when tokens are present
-        if (hasTokens) {
-            exclusionSearchWrapper.classList.add('has-tokens');
-        } else {
-            exclusionSearchWrapper.classList.remove('has-tokens');
-        }
-
-        // Clear the input field after adding/removing tokens and adjust placeholder
-        exclusionSearchInput.value = '';
+        // ... (handle has-tokens class, adjust placeholder)
         exclusionSearchInput.placeholder = hasTokens ? '' : 'Select people to exclude';
+        // DO NOT CLEAR input value here - keep it if user was typing
     }
 
     // --- FILTERING LOGIC --- 
@@ -1278,11 +1278,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             member.name.toLowerCase().includes(query)
         ).slice(0, 10); // Limit results
 
+        // Sort the filtered results
+        const sortedFilteredPeople = filteredPeople.sort((a, b) => a.name.localeCompare(b.name));
+        
         // Render results
         exclusionResultsDropdown.innerHTML = ''; 
-        if (filteredPeople.length > 0) {
-            // Use allSearchableItems to get consistent data structure
-            const resultItems = filteredPeople.map(member => {
+        if (sortedFilteredPeople.length > 0) {
+            const resultItems = sortedFilteredPeople.map(member => {
                 const uniqueId = `person-${member.id}`;
                 return allSearchableItems.find(item => item.id === uniqueId);
             }).filter(Boolean); // Filter out any undefined items
@@ -1308,14 +1310,15 @@ document.addEventListener('DOMContentLoaded', async () => {
          
          if (itemToAdd && itemToAdd.type === 'person' && !exclusions.some(ex => ex.id === itemToAdd.id)) {
              exclusions.push(itemToAdd); 
-             renderExclusions(); // Render tokens immediately
+             renderExclusions(); // *** Re-render tokens ***
              filterAndRenderTable(); // Update table based on new exclusion
              
              if (exclusionResultsDropdown) {
                 exclusionResultsDropdown.style.display = 'none';
                 isExclusionDropdownOpen = false;
              }
-             exclusionSearchInput.focus(); // Keep focus
+             exclusionSearchInput.value = ''; 
+             exclusionSearchInput.focus(); 
              console.log('Added exclusion:', itemToAdd);
          } else {
              console.log("Could not add exclusion (already added or not a person?):", itemToAdd);
@@ -1471,7 +1474,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (selectionIndex === -1) return;
 
         const item = selections[selectionIndex];
-        if (item.type === 'person' || item.type === 'condition-block') return; // Don't convert persons or existing blocks
+        if (item.type === 'person' || item.type === 'condition-block') return;
 
         console.log('Converting entity to condition block:', item);
 
@@ -1479,13 +1482,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         const originalType = item.type;
         const originalName = item.name;
         selections[selectionIndex] = {
-            ...item, // Keep original id, avatar etc.
-            type: 'condition-block', // Change type
-            isStandalone: false, // Mark as inline
+            ...item, 
+            type: 'condition-block', 
+            isStandalone: false, 
             originalType: originalType,
             originalName: originalName,
             rules: [
-                 { // Add the first rule based on the original entity
+                 { 
                      id: `rule-${nextConditionId++}`,
                      field: originalType, 
                      operator: 'is', 
