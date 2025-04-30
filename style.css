@@ -884,15 +884,19 @@ body {
     display: inline-block; /* Make items behave like tokens */
     padding: 2px 6px; /* Token padding */
     background-color: #e5e7eb; /* gray-200 */
+    border: 1px solid #d1d5db; /* Add subtle border like screenshot */
     border-radius: 4px;
-    margin: 0; /* Reset margin */
+    margin: 1px 2px; /* Adjust margin slightly */
     font-size: 0.8rem;
     color: #374151;
+    word-break: break-all; /* Prevent long tokens breaking layout */
 }
 
 /* Style remove button within token */
 .condition-value-container .choices__item.is-selected .choices__button {
     background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%236b7280" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>');
+    background-repeat: no-repeat;
+    background-position: center;
     background-size: 8px 8px;
     width: 14px;
     height: 14px;
@@ -904,8 +908,10 @@ body {
     border-radius: 0;
     opacity: 0.7;
 }
-.condition-value-container .choices__item.is-selected .choices__button:hover {
+.condition-value-container .choices__item.is-selected .choices__button:hover,
+.condition-value-container .choices__item.is-selected .choices__button:focus {
      opacity: 1;
+     background-color: transparent; /* Prevent hover background */
 }
 
 .condition-value-container .choices__input {
@@ -1349,6 +1355,12 @@ input:checked + .slider:before {
     justify-content: flex-end;
     gap: 0.75rem;
     flex-shrink: 0; /* Prevent footer shrinking */
+    /* Sticky Footer Styles */
+    position: sticky;
+    bottom: 0;
+    background-color: white; /* Or match the container background */
+    padding-bottom: 1.5rem; /* Add padding matching top */
+    z-index: 5; /* Ensure it's above scrolling content but below dropdowns */
 }
 
 .btn {

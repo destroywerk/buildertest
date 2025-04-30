@@ -361,21 +361,27 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
              // Update counts based on calculated values for the *current* state
              // Note: The count shown for 'members' tab might differ from `membersToRender.length` if toggles are active
-             let displayedMembersCount = (activeTab === 'members') ? calculateMembersTabCount(filteredMembers) : currentTabCount;
+             let displayedMembersCount = (activeTab === 'members') ? calculateMembersTabCount() : currentTabCount;
              updateTabCounts(displayedMembersCount, excludedCount, allCount);
         }
     }
 
     // Helper to calculate count for 'members' tab *after* toggle filters
-     function calculateMembersTabCount(filteredMembersBase) {
-        let membersTabList = [...filteredMembersBase]; // Start with post-selection/condition/exclusion list
-        if (toggleOptionsState.excludeExternal) membersTabList = membersTabList.filter(member => !member.isExternal);
-        if (toggleOptionsState.excludeOnLeave) membersTabList = membersTabList.filter(member => member.status !== 'On Leave');
-        if (toggleOptionsState.onlyStatusFilter && toggleOptionsState.statusFilterValue) {
-           membersTabList = membersTabList.filter(member => member.status === toggleOptionsState.statusFilterValue);
+     function calculateMembersTabCount() {
+        let baseMembers = getBaseFilteredMembers(); // Get members matching selections/conditions
+        // Apply Exclusions
+        if (exclusions.length > 0) {
+            const excludedPersonIds = new Set(exclusions.map(ex => ex.originalId));
+            baseMembers = baseMembers.filter(member => !excludedPersonIds.has(member.id));
         }
-        // TODO: Add hire date filter here too when implemented
-        return membersTabList.length;
+        // Apply Toggles
+        if (toggleOptionsState.excludeExternal) baseMembers = baseMembers.filter(member => !member.isExternal);
+        if (toggleOptionsState.excludeOnLeave) baseMembers = baseMembers.filter(member => member.status !== 'On Leave');
+        if (toggleOptionsState.onlyStatusFilter && toggleOptionsState.statusFilterValue) {
+            baseMembers = baseMembers.filter(member => member.status === toggleOptionsState.statusFilterValue);
+        }
+        // TODO: Hire Date Toggle
+        return baseMembers.length;
     }
 
     // Helper to calculate 'All' count *before* exclusions/toggles
@@ -410,6 +416,67 @@ document.addEventListener('DOMContentLoaded', async () => {
          }
          return baseMembers.length;
     }
+
+    // ** NEW ** Helper: Gets members matching selections & conditions (inline/standalone)
+    function getBaseFilteredMembers() {
+        if (selections.length === 0 && !conditions.some(c => c.isStandalone)) {
+            return []; // Nothing selected/defined
+        }
+
+        let combinedMemberIds = new Set();
+
+        // 1. Process regular selections (person, dept, etc.)
+        selections.filter(s => s.type !== 'condition-block').forEach(selection => {
+            memberData.forEach(member => {
+                let match = false;
+                if (selection.type === 'person') match = member.id === selection.originalId;
+                else if (selection.type === 'department') match = member.department === selection.originalName;
+                else if (selection.type === 'position') match = member.position === selection.originalName;
+                else if (selection.type === 'workplace') match = member.workplace === selection.originalName;
+                if (match) combinedMemberIds.add(member.id);
+            });
+        });
+
+        // 2. Process inline condition blocks (converted selections)
+        selections.filter(s => s.type === 'condition-block').forEach(block => {
+            memberData.forEach(member => {
+                // Must match original entity first
+                let originalMatch = false;
+                if (block.originalType === 'department') originalMatch = member.department === block.originalName;
+                else if (block.originalType === 'position') originalMatch = member.position === block.originalName;
+                else if (block.originalType === 'workplace') originalMatch = member.workplace === block.originalName;
+                
+                if (originalMatch) {
+                    // Then must match ALL rules within the block
+                    const allRulesMatch = block.rules.every(rule => checkRuleMatch(member, rule));
+                    if (allRulesMatch) combinedMemberIds.add(member.id);
+                }
+            });
+        });
+
+        // 3. Process standalone condition blocks
+        conditions.filter(c => c.isStandalone).forEach(block => {
+            memberData.forEach(member => {
+                 const allRulesMatch = block.rules.every(rule => checkRuleMatch(member, rule));
+                 if (allRulesMatch) combinedMemberIds.add(member.id);
+            });
+        });
+
+        // Return full member objects based on the combined IDs
+        return memberData.filter(member => combinedMemberIds.has(member.id));
+    }
+    
+    // ** NEW ** Helper: Checks if a member matches a single condition rule
+    function checkRuleMatch(member, rule) {
+         const memberValue = member[rule.field];
+         if (memberValue === undefined || memberValue === null) return false; 
+         const memberValueString = String(memberValue);
+         switch (rule.operator) {
+             case 'is': return rule.values.includes(memberValueString);
+             case 'is_not': return !rule.values.includes(memberValueString);
+             default: return true;
+         }
+     }
 
     // Updated function to render selected items/conditions as blocks
     function renderSelectionsAndConditions() {
@@ -472,18 +539,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             hasContent = true;
         });
 
+        // Render Entity Blocks converted to conditions (Inline)
+        selections.filter(item => item.type === 'condition-block').forEach(conditionBlockData => {
+            renderInlineConditionBlock(conditionBlockData); 
+            hasContent = true;
+        });
+
         // Render Standalone Condition Blocks (from 3-dot menu)
         conditions.forEach(conditionBlockData => {
             if (conditionBlockData.isStandalone) { // Add flag to distinguish
                  renderStandaloneConditionBlock(conditionBlockData);
                  hasContent = true;
             }
-        });
-
-        // Render Entity Blocks converted to conditions (Inline)
-        selections.filter(item => item.type === 'condition-block').forEach(conditionBlockData => {
-            renderInlineConditionBlock(conditionBlockData); 
-            hasContent = true;
         });
 
         // Hide conditions section if no standalone blocks exist
@@ -593,7 +660,6 @@ document.addEventListener('DOMContentLoaded', async () => {
          removeBtn.ariaLabel = `Remove ${conditionBlockData.originalName} block`;
          // Use handleRemoveSelection to remove the whole block (it's still a selection)
          removeBtn.addEventListener('click', handleRemoveSelection);
-         actionsContainer.appendChild(removeBtn);
          
          header.appendChild(iconContainer);
          header.appendChild(infoContainer);
@@ -758,26 +824,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Helper to update counts on tabs
     function updateTabCounts(memberCount, excludedCount, allCount) {
+        console.log("Updating counts:", { memberCount, excludedCount, allCount });
         tabButtons.forEach(btn => {
             const tabType = btn.dataset.tab;
             const countSpan = btn.querySelector('.tab-count');
-            if (!countSpan) return;
-
-            let count = 0;
-            if (tabType === 'members') {
-                count = memberCount;
-            } else if (tabType === 'excluded') {
-                count = excludedCount;
-            } else if (tabType === 'all') {
-                count = allCount; // Use pre-calculated count
+            if (!countSpan) {
+                console.warn("Count span not found for tab:", tabType);
+                return; 
             }
+            let count = 0;
+            if (tabType === 'members') count = memberCount;
+            else if (tabType === 'excluded') count = excludedCount;
+            else if (tabType === 'all') count = allCount;
 
             if (count > 0) {
                 countSpan.textContent = count;
                 countSpan.style.display = 'inline-block';
             } else {
                 countSpan.textContent = '0';
-                countSpan.style.display = 'none';
+                countSpan.style.display = 'none'; // Hide count if zero
             }
         });
     }
@@ -829,95 +894,62 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- FILTERING LOGIC --- 
     function filterAndRenderTable() {
         console.log("Filtering data...");
-        let filteredMembers = [...memberData]; // Start with full data
-        let allCount = 0;
-        let membersTabCount = 0;
-
-        // --- Initial Filtering (Selections & Conditions) --- 
-        const hasSelectionsOrConditions = selections.length > 0 || conditions.length > 0;
         
-        if (!hasSelectionsOrConditions) {
-             // If no selections or conditions, show the initial empty state
-             console.log("Initial empty state: No selections or conditions.");
-             renderMemberTable([]); // Render with empty list, triggering empty state logic
-             return; // Stop filtering early
+        const baseMembers = getBaseFilteredMembers(); // Get members matching selections/conditions
+        
+        if (baseMembers.length === 0 && selections.length === 0 && !conditions.some(c => c.isStandalone)) {
+             console.log("Filter resulted in initial empty state.");
+             renderMemberTable([]); // Render empty state
+             return;
         }
 
-        // 1. Apply Selections Filter (if any)
-        if (selections.length > 0) {
-            console.log("Applying selections:", selections);
-            filteredMembers = filteredMembers.filter(member => {
-                return selections.some(selection => {
-                    if (selection.type === 'person') return member.id === selection.originalId;
-                    if (selection.type === 'department') return member.department === selection.originalName;
-                    if (selection.type === 'position') return member.position === selection.originalName;
-                    if (selection.type === 'workplace') return member.workplace === selection.originalName;
-                    return false;
-                });
-            });
-            console.log("After selections:", filteredMembers.length);
-        }
+        let membersForCurrentTab = [];
+        let membersForMembersTabCount = [...baseMembers]; // Start count calculation base
+        let allTabCount = baseMembers.length; // Count before exclusions/toggles
+        let excludedTabCount = exclusions.length;
 
-        // 2. Apply Conditions Filter (if any)
-        if (conditions.length > 0) {
-             console.log("Applying conditions:", conditions);
-             filteredMembers = filteredMembers.filter(member => {
-                return conditions.every(condition => {
-                    const memberValue = member[condition.field];
-                    if (memberValue === undefined || memberValue === null) return false;
-                    const memberValueString = String(memberValue);
-                    switch (condition.operator) {
-                        case 'is': return condition.values.includes(memberValueString);
-                        case 'is_not': return !condition.values.includes(memberValueString);
-                        default: return true;
-                    }
-                });
-            });
-            console.log("After conditions:", filteredMembers.length);
-        }
-
-        // --- Post-Selection/Condition Filtering --- 
-
-        // Store the count *before* exclusions and toggles for the 'All' tab
-        allCount = filteredMembers.length;
-
-        // 3. Apply Exclusions Filter (Always applied before toggles)
+        // Apply Exclusions (for 'members' and 'all' tabs rendering, and 'members' count)
         if (exclusions.length > 0) {
-             console.log("Applying exclusions:", exclusions);
-             const excludedPersonIds = new Set(exclusions.map(ex => ex.originalId));
-             filteredMembers = filteredMembers.filter(member => !excludedPersonIds.has(member.id));
-             console.log("After exclusions:", filteredMembers.length);
+            const excludedPersonIds = new Set(exclusions.map(ex => ex.originalId));
+            membersForMembersTabCount = membersForMembersTabCount.filter(member => !excludedPersonIds.has(member.id));
         }
 
-        // --- Tab-Specific Filtering & Rendering --- 
+        // Apply Toggles (only for 'members' tab rendering and count)
+        let membersTabList = [...membersForMembersTabCount]; // Copy for rendering filter
+        if (toggleOptionsState.excludeExternal) {
+             membersTabList = membersTabList.filter(member => !member.isExternal);
+             membersForMembersTabCount = membersForMembersTabCount.filter(member => !member.isExternal);
+        }
+        if (toggleOptionsState.excludeOnLeave) {
+            membersTabList = membersTabList.filter(member => member.status !== 'On Leave');
+            membersForMembersTabCount = membersForMembersTabCount.filter(member => member.status !== 'On Leave');
+        }
+        if (toggleOptionsState.onlyStatusFilter && toggleOptionsState.statusFilterValue) {
+           membersTabList = membersTabList.filter(member => member.status === toggleOptionsState.statusFilterValue);
+           membersForMembersTabCount = membersForMembersTabCount.filter(member => member.status === toggleOptionsState.statusFilterValue);
+        }
+        // TODO: Hire Date Toggle
         
-        // Calculate count for 'members' tab including toggles
-        membersTabCount = calculateMembersTabCount(filteredMembers);
-
-        // Determine final list based on Active Tab
-        let finalMembersToRender = [];
+        // Determine list to render based on active tab
         if (activeTab === 'members') {
-             finalMembersToRender = [...filteredMembers]; // Start with post-exclusion list
-             // Apply toggle filters *only for rendering* the members tab
-             if (toggleOptionsState.excludeExternal) finalMembersToRender = finalMembersToRender.filter(member => !member.isExternal);
-             if (toggleOptionsState.excludeOnLeave) finalMembersToRender = finalMembersToRender.filter(member => member.status !== 'On Leave');
-             if (toggleOptionsState.onlyStatusFilter && toggleOptionsState.statusFilterValue) {
-                finalMembersToRender = finalMembersToRender.filter(member => member.status === toggleOptionsState.statusFilterValue);
-             }
-             // TODO: Add hire date filter here too when implemented
+            membersForCurrentTab = membersTabList;
         } else if (activeTab === 'excluded') {
-            // Show only excluded members based on the *original* data
             const excludedPersonIds = new Set(exclusions.map(ex => ex.originalId));
-            finalMembersToRender = memberData.filter(member => excludedPersonIds.has(member.id));
+            membersForCurrentTab = memberData.filter(member => excludedPersonIds.has(member.id));
         } else if (activeTab === 'all') {
-             // Show members based on selections/conditions/exclusions only (ignore toggles)
-             finalMembersToRender = filteredMembers; 
+            // Apply exclusions to the base list for the 'all' tab render
+             let allTabRenderList = [...baseMembers];
+             if (exclusions.length > 0) {
+                 const excludedPersonIds = new Set(exclusions.map(ex => ex.originalId));
+                 allTabRenderList = allTabRenderList.filter(member => !excludedPersonIds.has(member.id));
+             }
+             membersForCurrentTab = allTabRenderList;
         }
 
         // Final Render
-        console.log(`Rendering ${activeTab} tab with ${finalMembersToRender.length} members.`);
-        renderMemberTable(finalMembersToRender); 
-        // Note: updateTabCounts is now called inside renderMemberTable based on its logic
+        console.log(`Rendering ${activeTab} tab with ${membersForCurrentTab.length} members.`);
+        renderMemberTable(membersForCurrentTab); 
+        // updateTabCounts is called within renderMemberTable now, using membersForMembersTabCount.length for 'members' count.
     }
 
     // Function to render the search dropdown (either picker or results)
@@ -1134,17 +1166,7 @@ document.addEventListener('DOMContentLoaded', async () => {
      }
 
     function handleAddCondition() {
-        const newCondition = {
-            id: nextConditionId++,
-            field: conditionFieldOptions[0].value, // Default to first field
-            operator: conditionOperatorOptions.string[0].value, // Default to first string operator
-            values: []
-        };
-        conditions.push(newCondition);
-        // Ensure the conditions section is visible if it was hidden
-        if (conditionsSection) conditionsSection.style.display = 'block';
-        renderConditionsBlock(); // Re-render the entire block
-        filterAndRenderTable(); // Trigger filter
+        handleAddStandaloneConditionBlock();
     }
 
     // Function to remove all conditions (triggered from block header)
@@ -1538,11 +1560,42 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Handlers for updating/removing specific rules within blocks
     function updateRule(blockId, ruleId, key, value) {
-         // Find block (in selections or conditions array)
-         // Find rule within block
-         // Update rule property
-         // Re-render block (standalone or inline)
-         // Filter table
+        let blockToUpdate = conditions.find(b => b.id === blockId && b.isStandalone) || 
+                           selections.find(b => b.id === blockId && b.type === 'condition-block');
+        
+        if (blockToUpdate) {
+            const ruleIndex = blockToUpdate.rules.findIndex(r => r.id === ruleId);
+            if (ruleIndex > -1) {
+                const ruleToUpdate = blockToUpdate.rules[ruleIndex];
+                const oldValue = ruleToUpdate[key];
+                ruleToUpdate[key] = value;
+
+                let needsReRender = false;
+                // Reset operator/values if field changes
+                if (key === 'field') {
+                    ruleToUpdate.operator = conditionOperatorOptions.string[0].value;
+                    ruleToUpdate.values = [];
+                    needsReRender = true;
+                }
+
+                // Re-render the specific block
+                if (blockToUpdate.isStandalone) {
+                     renderStandaloneConditionBlock(blockToUpdate);
+                } else {
+                     renderInlineConditionBlock(blockToUpdate);
+                }
+                
+                // Filter table only if value likely changed meaning
+                let filterNeeded = true;
+                if (key === 'values' && JSON.stringify(oldValue) === JSON.stringify(value)) {
+                    filterNeeded = false; 
+                }
+                if (filterNeeded) {
+                    filterAndRenderTable();
+                }
+                console.log('Updated rule:', ruleToUpdate);
+            } else { console.error("Rule not found for update:", ruleId); }
+        } else { console.error("Block not found for rule update:", blockId); }
     }
     function removeRule(blockId, ruleId) {
          // Find block
