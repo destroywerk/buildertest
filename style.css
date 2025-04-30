@@ -4,7 +4,7 @@ body {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    background-color: #f1f2f4; /* Light gray background */
+    background-color: #ffffff; /* Changed to white */
     color: #333; /* Default text color */
 }
 
@@ -301,9 +301,9 @@ body {
     background-color: white; /* White background */
     padding: 1.5rem;
     border-radius: 0.75rem; /* rounded-xl */
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    /* box-shadow: 0 1px 3px rgba(0,0,0,0.1); */ /* Removed shadow */
     flex-grow: 1; /* Allow it to grow vertically if content is short */
-    border: none; /* Remove border around the container */
+    border: none; /* Ensure no border */
 }
 
 .main-content-area { /* Left Column */
