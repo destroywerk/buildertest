@@ -251,90 +251,118 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!memberTableBody || !memberTableSection || !memberTableEmptyState) return;
 
         memberTableBody.innerHTML = ''; // Clear existing table rows
-        let memberCount = membersToRender.length;
-        let excludedCount = exclusions.length; 
-        // Calculate 'all' count based on selections/conditions *before* exclusions/toggles
-        // We need to run a partial filter logic here or pass the count from filterAndRenderTable
-        let allCount = calculateAllCount(); // Helper function needed
-
-        if (memberCount === 0 && activeTab === 'members' && selections.length === 0 && conditions.length === 0) {
+        
+        // Check if the table should be in the empty state
+        // Empty state occurs ONLY when:
+        // 1. No selections are made AND
+        // 2. No conditions are defined
+        const shouldShowEmptyState = selections.length === 0 && conditions.length === 0;
+        
+        if (shouldShowEmptyState) {
             memberTableSection.style.display = 'none'; // Hide table section
             memberTableEmptyState.style.display = 'block'; // Show empty state
+            updateTabCounts(0, 0, 0); // Explicitly set counts to 0 for empty state
         } else {
             memberTableSection.style.display = 'block'; // Show table section
             memberTableEmptyState.style.display = 'none'; // Hide empty state
-            membersToRender.forEach(member => {
-                 const row = document.createElement('tr');
-                 // Add hover listeners to the row
-                 row.addEventListener('mouseenter', (e) => handleTableRowMouseEnter(e, member.id));
-                 row.addEventListener('mouseleave', handleTableRowMouseLeave);
-                 
-                 // Name Cell (with avatar/initials)
-                 const nameCell = document.createElement('td');
-                 const avatarContainer = document.createElement('div');
-                 avatarContainer.style.display = 'flex';
-                 avatarContainer.style.alignItems = 'center';
-     
-                 const avatarElement = document.createElement('div');
-                 avatarElement.classList.add('table-avatar-container'); 
-                 if (member.avatar) {
-                     const img = document.createElement('img');
-                     img.src = member.avatar;
-                     img.alt = member.name;
-                     img.classList.add('table-avatar-img');
-                     avatarElement.appendChild(img);
-                 } else {
-                     avatarElement.classList.add('table-avatar-initials');
-                     avatarElement.textContent = getInitials(member.name);
-                     // Simple color hashing for initials background
-                     let hash = 0;
-                     for (let i = 0; i < member.name.length; i++) {
-                         hash = member.name.charCodeAt(i) + ((hash << 5) - hash);
+            
+            // Calculate counts based on the provided list (which depends on the active tab)
+            let currentTabCount = membersToRender.length;
+            let excludedCount = exclusions.length; 
+            let allCount = calculateAllCount(); // Calculate count before exclusions/toggles
+            
+            if (membersToRender.length === 0 && activeTab === 'members') {
+                 // Special case: Selections/conditions exist, but filters result in zero members
+                 // Show a different empty state within the table area? Or just blank table?
+                 // For now, show blank table, counts will reflect 0.
+                  console.log("No members match current filters.");
+            } else if (membersToRender.length === 0 && activeTab === 'excluded') {
+                 console.log("No members are currently excluded.");
+                 // Show specific message for excluded empty state?
+            } else {
+                 // Render table rows
+                 membersToRender.forEach(member => {
+                     const row = document.createElement('tr');
+                     row.addEventListener('mouseenter', (e) => handleTableRowMouseEnter(e, member.id));
+                     row.addEventListener('mouseleave', handleTableRowMouseLeave);
+                     
+                     const nameCell = document.createElement('td');
+                     const avatarContainer = document.createElement('div');
+                     avatarContainer.style.display = 'flex';
+                     avatarContainer.style.alignItems = 'center';
+         
+                     const avatarElement = document.createElement('div');
+                     avatarElement.classList.add('table-avatar-container'); 
+                     if (member.avatar) {
+                         const img = document.createElement('img');
+                         img.src = member.avatar;
+                         img.alt = member.name;
+                         img.classList.add('table-avatar-img');
+                         avatarElement.appendChild(img);
+                     } else {
+                         avatarElement.classList.add('table-avatar-initials');
+                         avatarElement.textContent = getInitials(member.name);
+                         let hash = 0;
+                         for (let i = 0; i < member.name.length; i++) {
+                             hash = member.name.charCodeAt(i) + ((hash << 5) - hash);
+                         }
+                         const color = `hsl(${hash % 360}, 70%, 85%)`;
+                         const textColor = `hsl(${hash % 360}, 50%, 40%)`;
+                         avatarElement.style.backgroundColor = color;
+                         avatarElement.style.color = textColor;
                      }
-                     const color = `hsl(${hash % 360}, 70%, 85%)`; // Lighter background
-                     const textColor = `hsl(${hash % 360}, 50%, 40%)`; // Darker text
-                     avatarElement.style.backgroundColor = color;
-                     avatarElement.style.color = textColor;
-                 }
-     
-                 avatarContainer.appendChild(avatarElement);
-                 const nameText = document.createElement('span');
-                 nameText.textContent = member.name;
-                 nameText.classList.add('table-member-name');
-                 avatarContainer.appendChild(nameText);
-                 nameCell.appendChild(avatarContainer);
-     
-                 // Action Cell
-                 const actionCell = document.createElement('td');
-                 const actionButton = document.createElement('button');
-                 actionButton.dataset.memberId = member.id; 
-                 actionButton.classList.add('table-action-btn') 
-     
-                 if (activeTab === 'excluded') {
-                     actionButton.textContent = 'Include';
-                     actionButton.addEventListener('click', handleIncludeMember); 
-                 } else {
-                     const isExcluded = exclusions.some(ex => ex.originalId === member.id);
-                     if (isExcluded) {
-                         actionButton.textContent = 'Include'; // Change label to Include if excluded
+         
+                     avatarContainer.appendChild(avatarElement);
+                     const nameText = document.createElement('span');
+                     nameText.textContent = member.name;
+                     nameText.classList.add('table-member-name');
+                     avatarContainer.appendChild(nameText);
+                     nameCell.appendChild(avatarContainer);
+         
+                     const actionCell = document.createElement('td');
+                     const actionButton = document.createElement('button');
+                     actionButton.dataset.memberId = member.id; 
+                     actionButton.classList.add('table-action-btn') 
+         
+                     if (activeTab === 'excluded') {
+                         actionButton.textContent = 'Include';
                          actionButton.addEventListener('click', handleIncludeMember); 
                      } else {
-                         actionButton.textContent = 'Exclude';
-                         actionButton.addEventListener('click', handleExcludeMember); 
-                     }                 
-                 }
-                 actionCell.appendChild(actionButton);
-                 actionCell.classList.add('action-cell'); // Add class for text-align right
-     
-                 // Append cells to row
-                 row.appendChild(nameCell);
-                 row.appendChild(actionCell);
-     
-                 // Append row to table body
-                 memberTableBody.appendChild(row);
-            });
+                         const isExcluded = exclusions.some(ex => ex.originalId === member.id);
+                         if (isExcluded) {
+                             actionButton.textContent = 'Include';
+                             actionButton.addEventListener('click', handleIncludeMember); 
+                         } else {
+                             actionButton.textContent = 'Exclude';
+                             actionButton.addEventListener('click', handleExcludeMember); 
+                         }                 
+                     }
+                     actionCell.appendChild(actionButton);
+                     actionCell.classList.add('action-cell');
+         
+                     row.appendChild(nameCell);
+                     row.appendChild(actionCell);
+         
+                     memberTableBody.appendChild(row);
+                 });
+            }
+             // Update counts based on calculated values for the *current* state
+             // Note: The count shown for 'members' tab might differ from `membersToRender.length` if toggles are active
+             let displayedMembersCount = (activeTab === 'members') ? calculateMembersTabCount(filteredMembers) : currentTabCount;
+             updateTabCounts(displayedMembersCount, excludedCount, allCount);
         }
-        updateTabCounts(memberCount, excludedCount, allCount);
+    }
+
+    // Helper to calculate count for 'members' tab *after* toggle filters
+     function calculateMembersTabCount(filteredMembersBase) {
+        let membersTabList = [...filteredMembersBase]; // Start with post-selection/condition/exclusion list
+        if (toggleOptionsState.excludeExternal) membersTabList = membersTabList.filter(member => !member.isExternal);
+        if (toggleOptionsState.excludeOnLeave) membersTabList = membersTabList.filter(member => member.status !== 'On Leave');
+        if (toggleOptionsState.onlyStatusFilter && toggleOptionsState.statusFilterValue) {
+           membersTabList = membersTabList.filter(member => member.status === toggleOptionsState.statusFilterValue);
+        }
+        // TODO: Add hire date filter here too when implemented
+        return membersTabList.length;
     }
 
     // Helper to calculate 'All' count *before* exclusions/toggles
@@ -375,6 +403,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!selectedItemsContainer) return;
         selectedItemsContainer.innerHTML = ''; // Clear
         
+        let hasContent = false;
+
         // 1. Render Selections (People, Entities)
         selections.forEach(item => {
             const block = document.createElement('div');
@@ -424,19 +454,21 @@ document.addEventListener('DOMContentLoaded', async () => {
             block.appendChild(actionsContainer);
 
             selectedItemsContainer.appendChild(block);
+            hasContent = true;
         });
 
         // 2. Render Conditions Block (if any conditions exist)
         if (conditions.length > 0) {
-            renderConditionsBlock();
+            renderConditionsBlock(); // This function now appends to conditionsSection
+            hasContent = true;
         } else {
              if (conditionsSection) conditionsSection.style.display = 'none'; // Hide if empty
         }
 
-         // Show placeholder if both selections and conditions are empty
-         if (selections.length === 0 && conditions.length === 0) {
-              selectedItemsContainer.innerHTML = '<span class="placeholder-text">No items selected</span>';
-         }
+         // Do NOT show placeholder text - empty state handled by lack of blocks
+         // if (!hasContent) {
+         //      selectedItemsContainer.innerHTML = '<span class="placeholder-text">No items selected</span>'; 
+         // }
     }
     
     // Helper to render the entire conditions block (header + rows + footer)
@@ -581,14 +613,23 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Function to initialize Choices.js on a select element
     function initializeChoices(selectElement) {
+        const isConditionValueSelect = selectElement.classList.contains('condition-value-select');
         const choicesInstance = new Choices(selectElement, {
-             removeItemButton: true,
+             removeItemButton: true, // Show remove button on selected items (tokens)
              placeholder: true,
              placeholderValue: 'Select value(s)...',
-             itemSelectText: '', // Remove item select text
-             classNames: { // Use custom classes if needed for more specific styling
+             itemSelectText: '', // Remove "Press to select" text
+             allowHTML: false, // Prevent HTML injection in choices
+             // classNames specific to conditions for token styling
+             classNames: isConditionValueSelect ? {
                 containerOuter: 'choices condition-choices',
                 containerInner: 'choices__inner condition-choices__inner',
+                listMultiple: 'choices__list--multiple condition-choices__list--multiple',
+                item: 'choices__item choices__item--selectable condition-choices__item',
+                button: 'choices__button condition-choices__button'
+             } : { // Default classes otherwise
+                containerOuter: 'choices',
+                containerInner: 'choices__inner',
              }
          });
          
@@ -596,21 +637,26 @@ document.addEventListener('DOMContentLoaded', async () => {
          selectElement.addEventListener('change', (event) => {
              const selectedValues = Array.from(event.target.selectedOptions).map(option => option.value);
              const conditionId = parseInt(event.target.dataset.conditionId, 10);
-             updateCondition(conditionId, 'values', selectedValues);
+             // Only trigger update if it's a condition value select
+             if (!isNaN(conditionId)) { 
+                updateCondition(conditionId, 'values', selectedValues);
+             }
          });
 
-         // Make the whole container clickable to open the dropdown
-         const choicesOuter = selectElement.closest('.choices');
-         const choicesInner = choicesOuter?.querySelector('.choices__inner');
-         if (choicesInner) {
-             choicesInner.addEventListener('click', (event) => {
-                // Prevent if clicking on remove button or the input itself
-                if (event.target.closest('.choices__button') || event.target.matches('.choices__input')) {
-                    return;
-                }
-                choicesInstance.showDropdown(); 
-             });
-         }
+         // Make the whole container clickable to open the dropdown (for conditions)
+         if (isConditionValueSelect) {
+             const choicesOuter = selectElement.closest('.choices');
+             const choicesInner = choicesOuter?.querySelector('.choices__inner');
+             if (choicesInner) {
+                 choicesInner.addEventListener('click', (event) => {
+                    // Prevent if clicking on remove button or the input itself
+                    if (event.target.closest('.choices__button') || event.target.matches('.choices__input')) {
+                        return;
+                    }
+                    choicesInstance.showDropdown(); 
+                 });
+             }
+        }
     }
     
     // Helper to update counts on tabs
@@ -708,8 +754,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log("Filtering data...");
         let filteredMembers = [...memberData]; // Start with full data
         let allCount = 0;
+        let membersTabCount = 0;
 
-        // 1. Apply Selections Filter
+        // --- Initial Filtering (Selections & Conditions) --- 
+        const hasSelectionsOrConditions = selections.length > 0 || conditions.length > 0;
+        
+        if (!hasSelectionsOrConditions) {
+             // If no selections or conditions, show the initial empty state
+             console.log("Initial empty state: No selections or conditions.");
+             renderMemberTable([]); // Render with empty list, triggering empty state logic
+             return; // Stop filtering early
+        }
+
+        // 1. Apply Selections Filter (if any)
         if (selections.length > 0) {
             console.log("Applying selections:", selections);
             filteredMembers = filteredMembers.filter(member => {
@@ -724,7 +781,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.log("After selections:", filteredMembers.length);
         }
 
-        // 2. Apply Conditions Filter
+        // 2. Apply Conditions Filter (if any)
         if (conditions.length > 0) {
              console.log("Applying conditions:", conditions);
              filteredMembers = filteredMembers.filter(member => {
@@ -742,10 +799,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.log("After conditions:", filteredMembers.length);
         }
 
+        // --- Post-Selection/Condition Filtering --- 
+
         // Store the count *before* exclusions and toggles for the 'All' tab
         allCount = filteredMembers.length;
 
-        // 3. Apply Exclusions Filter (Always applied before toggles, affects 'members' and potentially 'all')
+        // 3. Apply Exclusions Filter (Always applied before toggles)
         if (exclusions.length > 0) {
              console.log("Applying exclusions:", exclusions);
              const excludedPersonIds = new Set(exclusions.map(ex => ex.originalId));
@@ -753,70 +812,35 @@ document.addEventListener('DOMContentLoaded', async () => {
              console.log("After exclusions:", filteredMembers.length);
         }
 
-        // 4. Apply Toggle Filters (Only affect 'members' tab view directly)
-        let membersTabCount = filteredMembers.length; // Count after selections, conditions, exclusions
-        if (toggleOptionsState.excludeExternal) {
-            console.log("Applying toggle: excludeExternal");
-            membersTabCount = filteredMembers.filter(member => !member.isExternal).length;
-        }
-        if (toggleOptionsState.excludeOnLeave) {
-             console.log("Applying toggle: excludeOnLeave");
-            membersTabCount = filteredMembers.filter(member => member.status !== 'On Leave').length;
-        }
-        // Apply Status Filter Toggle
-        if (toggleOptionsState.onlyStatusFilter && toggleOptionsState.statusFilterValue) {
-            console.log(`Applying toggle: onlyStatusFilter=${toggleOptionsState.statusFilterValue}`);
-            membersTabCount = filteredMembers.filter(member => member.status === toggleOptionsState.statusFilterValue).length;
-            // We modify the filteredMembers list *only* when the 'members' tab is active and this toggle is on
-            if (activeTab === 'members') {
-                 filteredMembers = filteredMembers.filter(member => member.status === toggleOptionsState.statusFilterValue);
-            }
-        }
-        // TODO: Apply Hire Date Filter Toggle (Needs date logic)
-        if (toggleOptionsState.excludeHireDate) {
-            console.log(`Applying toggle: excludeHireDate within ${toggleOptionsState.hireDateMonths} months`);
-            // --- Date Logic Placeholder ---
-            // const cutoffDate = new Date();
-            // cutoffDate.setMonth(cutoffDate.getMonth() - toggleOptionsState.hireDateMonths);
-            // membersTabCount = filteredMembers.filter(member => {
-            //     if (!member.hireDate) return true; // Keep if no hire date?
-            //     const hireDate = new Date(member.hireDate);
-            //     return hireDate < cutoffDate;
-            // }).length;
-            // if (activeTab === 'members') { ... filter filteredMembers ...}
-             console.warn("Hire date filtering not yet implemented.");
-        }
-
-        console.log("After toggles (potential count):", membersTabCount);
+        // --- Tab-Specific Filtering & Rendering --- 
+        
+        // Calculate count for 'members' tab including toggles
+        membersTabCount = calculateMembersTabCount(filteredMembers);
 
         // Determine final list based on Active Tab
         let finalMembersToRender = [];
         if (activeTab === 'members') {
-            // Apply toggle filters for rendering
-             let membersForTab = [...filteredMembers]; // Start with post-exclusion list
-             if (toggleOptionsState.excludeExternal) membersForTab = membersForTab.filter(member => !member.isExternal);
-             if (toggleOptionsState.excludeOnLeave) membersForTab = membersForTab.filter(member => member.status !== 'On Leave');
+             finalMembersToRender = [...filteredMembers]; // Start with post-exclusion list
+             // Apply toggle filters *only for rendering* the members tab
+             if (toggleOptionsState.excludeExternal) finalMembersToRender = finalMembersToRender.filter(member => !member.isExternal);
+             if (toggleOptionsState.excludeOnLeave) finalMembersToRender = finalMembersToRender.filter(member => member.status !== 'On Leave');
              if (toggleOptionsState.onlyStatusFilter && toggleOptionsState.statusFilterValue) {
-                membersForTab = membersForTab.filter(member => member.status === toggleOptionsState.statusFilterValue);
+                finalMembersToRender = finalMembersToRender.filter(member => member.status === toggleOptionsState.statusFilterValue);
              }
-             // TODO: Add hire date filter here too
-             finalMembersToRender = membersForTab;
+             // TODO: Add hire date filter here too when implemented
         } else if (activeTab === 'excluded') {
-            // Show only excluded members
+            // Show only excluded members based on the *original* data
             const excludedPersonIds = new Set(exclusions.map(ex => ex.originalId));
-            // Filter original memberData to find the full objects of excluded people
             finalMembersToRender = memberData.filter(member => excludedPersonIds.has(member.id));
         } else if (activeTab === 'all') {
-             // Show members based on selections/conditions/exclusions only
-             // Toggles are ignored for the 'All' view count and render
-             finalMembersToRender = filteredMembers; // Use the list before toggle filters were applied
+             // Show members based on selections/conditions/exclusions only (ignore toggles)
+             finalMembersToRender = filteredMembers; 
         }
 
         // Final Render
         console.log(`Rendering ${activeTab} tab with ${finalMembersToRender.length} members.`);
-        renderMemberTable(finalMembersToRender);
-        // Pass the correct counts to updateTabCounts (membersTabCount is calculated above)
-        updateTabCounts(membersTabCount, exclusions.length, allCount);
+        renderMemberTable(finalMembersToRender); 
+        // Note: updateTabCounts is now called inside renderMemberTable based on its logic
     }
 
     // Function to render the search dropdown (either picker or results)
@@ -863,8 +887,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 itemsToShow = allSearchableItems.filter(item => 
                     item.type === 'person' && 
                     !selectedIds.has(item.id) && 
-                    !excludedPersonIds.has(item.originalId) // Check original ID for exclusion
-                ).slice(0, 10);
+                    !excludedPersonIds.has(item.originalId)
+                ); // Remove .slice(0, 10) for people
                 break;
             case 'departments': 
                 itemsToShow = allSearchableItems.filter(item => item.type === 'department' && !selectedIds.has(item.id)).slice(0, 10);
@@ -1177,16 +1201,22 @@ document.addEventListener('DOMContentLoaded', async () => {
          const itemToAdd = allSearchableItems.find(item => item.id === itemId);
          
          if (itemToAdd && itemToAdd.type === 'person' && !exclusions.some(ex => ex.id === itemToAdd.id)) {
-             exclusions.push(itemToAdd);
-             renderExclusions();
+             exclusions.push(itemToAdd); 
+             renderExclusions(); // Render tokens immediately
+             filterAndRenderTable(); // Update table based on new exclusion
+             
              if (exclusionResultsDropdown) {
                 exclusionResultsDropdown.style.display = 'none';
                 isExclusionDropdownOpen = false;
              }
-             // exclusionSearchInput.value = ''; // Clear input handled by renderExclusions
              exclusionSearchInput.focus(); // Keep focus
-             filterAndRenderTable();
              console.log('Added exclusion:', itemToAdd);
+         } else {
+             console.log("Could not add exclusion (already added or not a person?):", itemToAdd);
+             if (exclusionResultsDropdown) { // Still close dropdown if clicked
+                exclusionResultsDropdown.style.display = 'none';
+                isExclusionDropdownOpen = false;
+             }
          }
     }
 
@@ -1375,16 +1405,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- INITIALIZATION --- 
     await loadData();
-    if (memberData.length > 0) {
-        renderSelectionsAndConditions(); // Render selections/conditions (empty initially)
-        renderExclusions(); 
-        filterAndRenderTable(); // Initial filter (should show empty state)
-    } else {
-        // Show error or empty state if data load failed
-        memberTableSection.style.display = 'none';
-        memberTableEmptyState.style.display = 'block';
-        updateTabCounts(0, 0, 0);
-    }
+    renderSelectionsAndConditions(); // Render selections/conditions area (initially empty)
+    renderExclusions(); // Render exclusions area (initially empty)
+    // The initial call to filterAndRenderTable should now correctly handle the empty state
+    filterAndRenderTable(); 
 
     // --- EVENT LISTENERS --- 
     if (mainSearchInput) {
