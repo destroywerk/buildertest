@@ -594,7 +594,6 @@ document.addEventListener('DOMContentLoaded', async () => {
          removeBtn.innerHTML = getEntityIconSVG('close'); 
          removeBtn.ariaLabel = 'Remove all conditions';
          removeBtn.addEventListener('click', () => handleRemoveStandaloneConditionBlock(conditionBlockData.id));
-         actionsContainer.appendChild(removeBtn);
          header.appendChild(iconContainer);
          header.appendChild(infoContainer);
          header.appendChild(actionsContainer);
@@ -654,12 +653,23 @@ document.addEventListener('DOMContentLoaded', async () => {
 
          const actionsContainer = document.createElement('div');
          actionsContainer.classList.add('entity-actions');
+         
+         // Add "Add Condition" button to inline block footer
+         const addBtn = document.createElement('button');
+         addBtn.classList.add('add-condition-rule-btn'); 
+         addBtn.innerHTML = `${getEntityIconSVG('plus')} Add condition`;
+         addBtn.addEventListener('click', () => handleAddRuleToInlineBlock(conditionBlockData.id)); 
+
          const removeBtn = document.createElement('button');
          removeBtn.classList.add('btn-remove-entity'); 
          removeBtn.innerHTML = getEntityIconSVG('close'); 
          removeBtn.ariaLabel = `Remove ${conditionBlockData.originalName} block`;
          // Use handleRemoveSelection to remove the whole block (it's still a selection)
          removeBtn.addEventListener('click', handleRemoveSelection);
+
+         // Add buttons to actions container (Order might matter for layout)
+         actionsContainer.appendChild(addBtn); // Add condition first? Or last? Let's try last.
+         actionsContainer.appendChild(removeBtn);
          
          header.appendChild(iconContainer);
          header.appendChild(infoContainer);
@@ -674,20 +684,10 @@ document.addEventListener('DOMContentLoaded', async () => {
          });
          block.appendChild(contentDiv);
 
-         // --- Footer (Add Condition Button) ---
-         const footerDiv = document.createElement('div');
-         footerDiv.classList.add('condition-block-footer');
-         const addBtn = document.createElement('button');
-         addBtn.classList.add('add-condition-rule-btn'); // Different class/handler potentially
-         addBtn.innerHTML = `${getEntityIconSVG('plus')} Add condition`;
-         addBtn.addEventListener('click', () => handleAddRuleToInlineBlock(conditionBlockData.id)); 
-         footerDiv.appendChild(addBtn);
-         block.appendChild(footerDiv);
-
-         // Append to the main selections container
+         // *** FIX: Append the block to the container ***
          selectedItemsContainer.appendChild(block);
 
-         // Initialize Choices.js
+         // Initialize Choices.js for all new selects AFTER they are in the DOM
          contentDiv.querySelectorAll('select.condition-value-select').forEach(select => {
              initializeChoices(select);
          });
@@ -780,6 +780,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (selectElement.choices) {
              selectElement.choices.destroy();
         }
+        
+        // *** ADD LOGGING ***
+        if (isConditionValueSelect) {
+            console.log('Initializing Choices.js for multi-select value:', selectElement);
+        }
+
         const choicesInstance = new Choices(selectElement, {
              removeItemButton: true, 
              placeholder: true,
@@ -1305,28 +1311,36 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function handleAddExclusion(event) {
-         const itemId = event.currentTarget.dataset.itemId;
-         const itemToAdd = allSearchableItems.find(item => item.id === itemId);
-         
-         if (itemToAdd && itemToAdd.type === 'person' && !exclusions.some(ex => ex.id === itemToAdd.id)) {
-             exclusions.push(itemToAdd); 
-             renderExclusions(); // *** Re-render tokens ***
-             filterAndRenderTable(); // Update table based on new exclusion
-             
-             if (exclusionResultsDropdown) {
-                exclusionResultsDropdown.style.display = 'none';
-                isExclusionDropdownOpen = false;
+        const itemId = event.currentTarget.dataset.itemId;
+        const itemToAdd = allSearchableItems.find(item => item.id === itemId);
+
+        if (itemToAdd && itemToAdd.type === 'person') {
+             // Check if already excluded by original ID
+             if (!exclusions.some(ex => ex.originalId === itemToAdd.originalId)) {
+                 exclusions.push({ ...itemToAdd }); // Add a copy
+                 
+                 // *** FIX: Re-render exclusion tokens ***
+                 renderExclusions();
+                 
+                 if (exclusionSearchInput) {
+                     exclusionSearchInput.value = ''; // Clear input
+                     exclusionSearchInput.focus(); // Keep focus
+                 }
+                 if (exclusionResultsDropdown) {
+                     exclusionResultsDropdown.style.display = 'none';
+                     isExclusionDropdownOpen = false;
+                 }
+                 filterAndRenderTable(); // Trigger filter
+                 console.log('Added exclusion:', itemToAdd);
+             } else {
+                  console.log('Person already excluded:', itemToAdd);
+                  if (exclusionSearchInput) exclusionSearchInput.value = '';
+                  if (exclusionResultsDropdown) {
+                      exclusionResultsDropdown.style.display = 'none';
+                      isExclusionDropdownOpen = false;
+                  }
              }
-             exclusionSearchInput.value = ''; 
-             exclusionSearchInput.focus(); 
-             console.log('Added exclusion:', itemToAdd);
-         } else {
-             console.log("Could not add exclusion (already added or not a person?):", itemToAdd);
-             if (exclusionResultsDropdown) { // Still close dropdown if clicked
-                exclusionResultsDropdown.style.display = 'none';
-                isExclusionDropdownOpen = false;
-             }
-         }
+        }
     }
 
     // Updated to work with tokens
