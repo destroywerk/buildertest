@@ -219,12 +219,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log(`Prepared ${allSearchableItems.length} searchable items.`);
 
         // Derive options lists here after memberData is loaded
-        departmentOptions = [...new Set(memberData.map(m => m.department).filter(Boolean))].sort();
-        positionOptions = [...new Set(memberData.map(m => m.position).filter(Boolean))].sort();
-        workplaceOptions = [...new Set(memberData.map(m => m.workplace).filter(Boolean))].sort();
-        statusOptions = [...new Set(memberData.map(m => m.status).filter(Boolean))].sort();
+        departmentOptions = [...new Set(memberData.map(m => m.department).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+        positionOptions = [...new Set(memberData.map(m => m.position).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+        workplaceOptions = [...new Set(memberData.map(m => m.workplace).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+        statusOptions = [...new Set(memberData.map(m => m.status).filter(Boolean))].sort((a, b) => a.localeCompare(b));
         
-        // Populate status filter dropdown
+        // Populate status filter dropdown (already sorted)
         if (statusFilterSelect) {
             statusFilterSelect.innerHTML = '<option value="">Any</option>'; // Reset
             statusOptions.forEach(status => {
@@ -235,7 +235,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         }
         
-        console.log('Derived Options:', { departmentOptions, positionOptions, workplaceOptions, statusOptions });
+        console.log('Derived & Sorted Options:', { departmentOptions, positionOptions, workplaceOptions, statusOptions });
+        
+        // Also sort allSearchableItems (optional, depends if picker requires it)
+        allSearchableItems.sort((a, b) => a.name.localeCompare(b.name));
     }
 
     // --- RENDER FUNCTIONS --- 
@@ -244,6 +247,35 @@ document.addEventListener('DOMContentLoaded', async () => {
     function getInitials(name) {
         if (!name) return '';
         return name.split(' ').map(n => n[0]).join('').toUpperCase();
+    }
+
+    // Standardized function to get avatar element (img or initials div)
+    function createAvatarElement(item, classNamePrefix = 'table') { // Prefixes like 'table', 'token', 'result-item', 'entity'
+         const avatarElement = document.createElement('div');
+         avatarElement.classList.add(`${classNamePrefix}-avatar-container`); 
+         if (item.avatar) {
+             const img = document.createElement('img');
+             img.src = item.avatar;
+             img.alt = item.name;
+             img.classList.add(`${classNamePrefix}-avatar-img`);
+             avatarElement.appendChild(img);
+         } else {
+             avatarElement.classList.add(`${classNamePrefix}-avatar-initials`);
+             const initials = getInitials(item.name).substring(0, 2);
+             avatarElement.textContent = initials;
+             // Consistent color hashing
+             let hash = 0;
+             const name = item.name || ''; // Handle potentially undefined names
+             for (let i = 0; i < name.length; i++) {
+                 hash = name.charCodeAt(i) + ((hash << 5) - hash);
+             }
+             // Adjust saturation/lightness slightly for different contexts maybe?
+             const color = `hsl(${hash % 360}, 70%, 85%)`; 
+             const textColor = `hsl(${hash % 360}, 50%, 40%)`;
+             avatarElement.style.backgroundColor = color;
+             avatarElement.style.color = textColor;
+         }
+         return avatarElement;
     }
 
     // Updated function to render the member table
@@ -291,28 +323,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                      avatarContainer.style.display = 'flex';
                      avatarContainer.style.alignItems = 'center';
          
-                     const avatarElement = document.createElement('div');
-                     avatarElement.classList.add('table-avatar-container'); 
-                     if (member.avatar) {
-                         const img = document.createElement('img');
-                         img.src = member.avatar;
-                         img.alt = member.name;
-                         img.classList.add('table-avatar-img');
-                         avatarElement.appendChild(img);
-                     } else {
-                         avatarElement.classList.add('table-avatar-initials');
-                         avatarElement.textContent = getInitials(member.name);
-                         let hash = 0;
-                         for (let i = 0; i < member.name.length; i++) {
-                             hash = member.name.charCodeAt(i) + ((hash << 5) - hash);
-                         }
-                         const color = `hsl(${hash % 360}, 70%, 85%)`;
-                         const textColor = `hsl(${hash % 360}, 50%, 40%)`;
-                         avatarElement.style.backgroundColor = color;
-                         avatarElement.style.color = textColor;
-                     }
-         
+                     const avatarElement = createAvatarElement(member, 'table'); 
                      avatarContainer.appendChild(avatarElement);
+                     
                      const nameText = document.createElement('span');
                      nameText.textContent = member.name;
                      nameText.classList.add('table-member-name');
@@ -405,16 +418,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         let hasContent = false;
 
-        // 1. Render Selections (People, Entities)
-        selections.forEach(item => {
+        // Render Selections/Entities that haven't been converted to conditions
+        selections.filter(item => item.type !== 'condition-block').forEach(item => {
             const block = document.createElement('div');
             block.classList.add('selected-entity-block');
             block.dataset.itemId = item.id;
 
             const iconContainer = document.createElement('div');
             iconContainer.classList.add('entity-icon-container', item.type);
-            if (item.type === 'person' && item.avatar) {
-                iconContainer.innerHTML = `<img src="${item.avatar}" alt="" />`;
+            // Use standardized avatar logic for person type
+            if (item.type === 'person') {
+                const personAvatarElement = createAvatarElement(item, 'entity');
+                iconContainer.appendChild(personAvatarElement);
             } else {
                 iconContainer.innerHTML = getEntityIconSVG(item.type);
             }
@@ -457,87 +472,167 @@ document.addEventListener('DOMContentLoaded', async () => {
             hasContent = true;
         });
 
-        // 2. Render Conditions Block (if any conditions exist)
-        if (conditions.length > 0) {
-            renderConditionsBlock(); // This function now appends to conditionsSection
+        // Render Standalone Condition Blocks (from 3-dot menu)
+        conditions.forEach(conditionBlockData => {
+            if (conditionBlockData.isStandalone) { // Add flag to distinguish
+                 renderStandaloneConditionBlock(conditionBlockData);
+                 hasContent = true;
+            }
+        });
+
+        // Render Entity Blocks converted to conditions (Inline)
+        selections.filter(item => item.type === 'condition-block').forEach(conditionBlockData => {
+            renderInlineConditionBlock(conditionBlockData); 
             hasContent = true;
-        } else {
-             if (conditionsSection) conditionsSection.style.display = 'none'; // Hide if empty
+        });
+
+        // Hide conditions section if no standalone blocks exist
+        if (!conditions.some(c => c.isStandalone)) {
+            if (conditionsSection) conditionsSection.style.display = 'none';
         }
 
-         // Do NOT show placeholder text - empty state handled by lack of blocks
-         // if (!hasContent) {
-         //      selectedItemsContainer.innerHTML = '<span class="placeholder-text">No items selected</span>'; 
-         // }
+        // No placeholder text needed
+    }
+
+    // Renders the standalone block added via the 3-dot menu
+    function renderStandaloneConditionBlock(conditionBlockData) {
+         if (!conditionsSection || !conditionsListContainer) return;
+         conditionsSection.style.display = 'block'; // Show the section
+         // Check if block already rendered, maybe clear first if needed
+         // For now, assume we clear the whole section elsewhere or render selectively
+ 
+         const existingBlock = conditionsSection.querySelector(`.condition-block-wrapper[data-condition-block-id="${conditionBlockData.id}"]`);
+         if (existingBlock) existingBlock.remove(); // Remove old if exists
+
+         const conditionBlock = document.createElement('div');
+         conditionBlock.classList.add('condition-block-wrapper');
+         conditionBlock.dataset.conditionBlockId = conditionBlockData.id;
+ 
+         // Header
+         const header = document.createElement('div');
+         header.classList.add('condition-block-header');
+         const iconContainer = document.createElement('div');
+         iconContainer.classList.add('entity-icon-container', 'condition-group');
+         iconContainer.innerHTML = getEntityIconSVG('condition-group');
+         const infoContainer = document.createElement('div');
+         infoContainer.classList.add('entity-info');
+         const nameDiv = document.createElement('div');
+         nameDiv.classList.add('entity-name');
+         nameDiv.textContent = 'People added based on all of the following conditions'; // Static title
+         infoContainer.appendChild(nameDiv);
+         const actionsContainer = document.createElement('div');
+         actionsContainer.classList.add('entity-actions');
+         const removeBtn = document.createElement('button');
+         removeBtn.classList.add('btn-remove-entity'); 
+         removeBtn.innerHTML = getEntityIconSVG('close'); 
+         removeBtn.ariaLabel = 'Remove all conditions';
+         removeBtn.addEventListener('click', () => handleRemoveStandaloneConditionBlock(conditionBlockData.id));
+         actionsContainer.appendChild(removeBtn);
+         header.appendChild(iconContainer);
+         header.appendChild(infoContainer);
+         header.appendChild(actionsContainer);
+         conditionBlock.appendChild(header);
+
+         // Content (Rows)
+         const contentDiv = document.createElement('div');
+         contentDiv.classList.add('condition-block-content');
+         conditionBlockData.rules.forEach(rule => { // Assuming conditions are stored in a 'rules' array
+             contentDiv.appendChild(createConditionRowElement(rule, conditionBlockData.id));
+         });
+         conditionBlock.appendChild(contentDiv);
+
+         // Footer (Add Condition Button)
+         const footerDiv = document.createElement('div');
+         footerDiv.classList.add('condition-block-footer');
+         const addBtn = document.createElement('button');
+         addBtn.classList.add('add-condition-rule-btn'); // Different class/handler potentially
+         addBtn.innerHTML = `${getEntityIconSVG('plus')} Add condition`;
+         addBtn.addEventListener('click', () => handleAddRuleToStandaloneBlock(conditionBlockData.id)); 
+         footerDiv.appendChild(addBtn);
+         conditionBlock.appendChild(footerDiv);
+
+         // Append the whole block to the section
+         conditionsSection.appendChild(conditionBlock);
+
+         // Initialize Choices.js for all new selects AFTER they are in the DOM
+         contentDiv.querySelectorAll('select.condition-value-select').forEach(select => {
+             initializeChoices(select);
+         });
+    }
+
+    // Renders an entity that has been converted to have conditions (inline)
+    function renderInlineConditionBlock(conditionBlockData) {
+         if (!selectedItemsContainer) return;
+
+         // Create the block wrapper
+         const block = document.createElement('div');
+         block.classList.add('condition-block-wrapper'); // Use same wrapper style
+         block.dataset.itemId = conditionBlockData.id; // Use original selection ID
+
+         // --- Header --- (Similar to entity block, but maybe different text)
+         const header = document.createElement('div');
+         header.classList.add('condition-block-header'); // Reuse header style
+
+         const iconContainer = document.createElement('div');
+         iconContainer.classList.add('entity-icon-container', conditionBlockData.originalType); // Use original type for icon
+         iconContainer.innerHTML = getEntityIconSVG(conditionBlockData.originalType);
+         
+         const infoContainer = document.createElement('div');
+         infoContainer.classList.add('entity-info');
+         const nameDiv = document.createElement('div');
+         nameDiv.classList.add('entity-name');
+         nameDiv.textContent = `${conditionBlockData.originalName} with conditions`; // Indicate conditions are added
+         infoContainer.appendChild(nameDiv);
+         // Maybe add subtitle? const typeDiv = ...
+
+         const actionsContainer = document.createElement('div');
+         actionsContainer.classList.add('entity-actions');
+         const removeBtn = document.createElement('button');
+         removeBtn.classList.add('btn-remove-entity'); 
+         removeBtn.innerHTML = getEntityIconSVG('close'); 
+         removeBtn.ariaLabel = `Remove ${conditionBlockData.originalName} block`;
+         // Use handleRemoveSelection to remove the whole block (it's still a selection)
+         removeBtn.addEventListener('click', handleRemoveSelection);
+         actionsContainer.appendChild(removeBtn);
+         
+         header.appendChild(iconContainer);
+         header.appendChild(infoContainer);
+         header.appendChild(actionsContainer);
+         block.appendChild(header);
+
+         // --- Content (Condition Rows) --- 
+         const contentDiv = document.createElement('div');
+         contentDiv.classList.add('condition-block-content');
+         conditionBlockData.rules.forEach(rule => { // Assuming conditions stored in 'rules'
+             contentDiv.appendChild(createConditionRowElement(rule, conditionBlockData.id)); // Pass main block ID
+         });
+         block.appendChild(contentDiv);
+
+         // --- Footer (Add Condition Button) ---
+         const footerDiv = document.createElement('div');
+         footerDiv.classList.add('condition-block-footer');
+         const addBtn = document.createElement('button');
+         addBtn.classList.add('add-condition-rule-btn'); // Different class/handler potentially
+         addBtn.innerHTML = `${getEntityIconSVG('plus')} Add condition`;
+         addBtn.addEventListener('click', () => handleAddRuleToInlineBlock(conditionBlockData.id)); 
+         footerDiv.appendChild(addBtn);
+         block.appendChild(footerDiv);
+
+         // Append to the main selections container
+         selectedItemsContainer.appendChild(block);
+
+         // Initialize Choices.js
+         contentDiv.querySelectorAll('select.condition-value-select').forEach(select => {
+             initializeChoices(select);
+         });
     }
     
-    // Helper to render the entire conditions block (header + rows + footer)
-    function renderConditionsBlock() {
-        if (!conditionsSection || !conditionsListContainer) return;
-        conditionsSection.style.display = 'block'; // Show the section
-        conditionsSection.innerHTML = ''; // Clear previous content
-
-        // Create Wrapper
-        const conditionBlock = document.createElement('div');
-        conditionBlock.classList.add('condition-block-wrapper');
-
-        // Header
-        const header = document.createElement('div');
-        header.classList.add('condition-block-header');
-        const iconContainer = document.createElement('div');
-        iconContainer.classList.add('entity-icon-container', 'condition-group');
-        iconContainer.innerHTML = getEntityIconSVG('condition-group');
-        const infoContainer = document.createElement('div');
-        infoContainer.classList.add('entity-info');
-        const nameDiv = document.createElement('div');
-        nameDiv.classList.add('entity-name');
-        nameDiv.textContent = 'People added based on all of the following conditions'; // Static title
-        infoContainer.appendChild(nameDiv);
-        const actionsContainer = document.createElement('div');
-        actionsContainer.classList.add('entity-actions');
-        const removeBtn = document.createElement('button');
-        removeBtn.classList.add('btn-remove-entity'); // Reuse style
-        removeBtn.innerHTML = getEntityIconSVG('close');
-        removeBtn.ariaLabel = 'Remove all conditions';
-        removeBtn.addEventListener('click', handleRemoveAllConditions);
-        actionsContainer.appendChild(removeBtn);
-        header.appendChild(iconContainer);
-        header.appendChild(infoContainer);
-        header.appendChild(actionsContainer);
-        conditionBlock.appendChild(header);
-
-        // Content (Rows)
-        const contentDiv = document.createElement('div');
-        contentDiv.classList.add('condition-block-content');
-        conditions.forEach(condition => {
-            contentDiv.appendChild(createConditionRowElement(condition));
-        });
-        conditionBlock.appendChild(contentDiv);
-
-        // Footer (Add Condition Button)
-        const footerDiv = document.createElement('div');
-        footerDiv.classList.add('condition-block-footer');
-        const addBtn = document.createElement('button');
-        addBtn.id = 'add-condition-btn'; // Keep ID for potential specific listeners
-        addBtn.innerHTML = `${getEntityIconSVG('plus')} Add condition`;
-        addBtn.addEventListener('click', handleAddCondition); // Use the main add handler
-        footerDiv.appendChild(addBtn);
-        conditionBlock.appendChild(footerDiv);
-
-        // Append the whole block to the section
-        conditionsSection.appendChild(conditionBlock);
-
-        // Initialize Choices.js for all new selects AFTER they are in the DOM
-        contentDiv.querySelectorAll('select.condition-value-select').forEach(select => {
-            initializeChoices(select);
-        });
-    }
-    
-    // Helper to create a single condition row DOM element
-    function createConditionRowElement(condition) {
+    // Helper to create a single condition row DOM element (needs blockId for updates)
+    function createConditionRowElement(rule, blockId) {
         const conditionRow = document.createElement('div');
         conditionRow.classList.add('condition-row');
-        conditionRow.dataset.conditionId = condition.id;
+        conditionRow.dataset.ruleId = rule.id; // Use rule ID
+        conditionRow.dataset.blockId = blockId; // Reference parent block
 
         // Field Dropdown
         const fieldSelect = document.createElement('select');
@@ -546,10 +641,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             const option = document.createElement('option');
             option.value = opt.value;
             option.textContent = opt.label;
-            if (opt.value === condition.field) option.selected = true;
+            if (opt.value === rule.field) option.selected = true;
             fieldSelect.appendChild(option);
         });
-        fieldSelect.addEventListener('change', (e) => updateCondition(condition.id, 'field', e.target.value));
+        fieldSelect.addEventListener('change', (e) => updateRule(blockId, rule.id, 'field', e.target.value));
         
         // Operator Dropdown
         const operatorSelect = document.createElement('select');
@@ -559,10 +654,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             const option = document.createElement('option');
             option.value = opt.value;
             option.textContent = opt.label;
-             if (opt.value === condition.operator) option.selected = true;
+             if (opt.value === rule.operator) option.selected = true;
             operatorSelect.appendChild(option);
         });
-         operatorSelect.addEventListener('change', (e) => updateCondition(condition.id, 'operator', e.target.value));
+         operatorSelect.addEventListener('change', (e) => updateRule(blockId, rule.id, 'operator', e.target.value));
 
         // Value Input/Select (Using Choices.js)
         const valueContainer = document.createElement('div');
@@ -571,11 +666,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         const valueSelect = document.createElement('select');
         valueSelect.multiple = true;
         valueSelect.classList.add('condition-value-select');
-        valueSelect.dataset.conditionId = condition.id;
+        valueSelect.dataset.ruleId = rule.id;
+        valueSelect.dataset.blockId = blockId;
 
-        // Determine options based on field
+        // Populate the select with options
         let currentOptions = [];
-        switch (condition.field) {
+        switch (rule.field) {
             case 'department': currentOptions = departmentOptions; break;
             case 'position': currentOptions = positionOptions; break;
             case 'workplace': currentOptions = workplaceOptions; break;
@@ -588,7 +684,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const option = document.createElement('option');
             option.value = optValue;
             option.textContent = optValue;
-            if (condition.values.includes(optValue)) {
+            if (rule.values.includes(optValue)) {
                 option.selected = true;
             }
             valueSelect.appendChild(option);
@@ -600,8 +696,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         const removeBtn = document.createElement('button');
         removeBtn.classList.add('remove-condition-btn');
         removeBtn.innerHTML = getEntityIconSVG('delete'); // Use delete icon
-        removeBtn.ariaLabel = `Remove condition for ${condition.field}`;
-        removeBtn.addEventListener('click', () => removeCondition(condition.id));
+        removeBtn.ariaLabel = `Remove condition for ${rule.field}`;
+        removeBtn.addEventListener('click', () => removeRule(blockId, rule.id));
 
         conditionRow.appendChild(fieldSelect);
         conditionRow.appendChild(operatorSelect);
@@ -636,10 +732,11 @@ document.addEventListener('DOMContentLoaded', async () => {
          // Add event listener for Choices.js changes
          selectElement.addEventListener('change', (event) => {
              const selectedValues = Array.from(event.target.selectedOptions).map(option => option.value);
-             const conditionId = parseInt(event.target.dataset.conditionId, 10);
+             const ruleId = parseInt(event.target.dataset.ruleId, 10);
+             const blockId = parseInt(event.target.dataset.blockId, 10);
              // Only trigger update if it's a condition value select
-             if (!isNaN(conditionId)) { 
-                updateCondition(conditionId, 'values', selectedValues);
+             if (!isNaN(ruleId) && !isNaN(blockId)) { 
+                updateRule(blockId, ruleId, 'values', selectedValues);
              }
          });
 
@@ -695,29 +792,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         let hasTokens = false;
         if (exclusions.length > 0) {
             hasTokens = true;
-            // Render tokens in reverse so they appear left-to-right before input
             [...exclusions].reverse().forEach(item => {
                 const token = document.createElement('div');
-                token.classList.add('excluded-item-token');
-                token.dataset.itemId = item.id;
-
-                // Small avatar/initials
-                const avatar = document.createElement('span');
-                avatar.classList.add('token-avatar');
-                if (item.avatar) {
-                    avatar.innerHTML = `<img src="${item.avatar}" alt="">`;
-                } else {
-                    avatar.textContent = getInitials(item.name).substring(0,2);
-                    // Color hashing
-                     let hash = 0;
-                     for (let i = 0; i < item.name.length; i++) {
-                         hash = item.name.charCodeAt(i) + ((hash << 5) - hash);
-                     }
-                     const color = `hsl(${hash % 360}, 60%, 80%)`; 
-                     const textColor = `hsl(${hash % 360}, 50%, 30%)`;
-                     avatar.style.backgroundColor = color;
-                     avatar.style.color = textColor;
-                }
+                const avatar = createAvatarElement(item, 'token');
                 token.appendChild(avatar);
 
                 const nameSpan = document.createElement('span');
@@ -901,6 +978,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 break;
         }
 
+        itemsToShow.sort((a, b) => a.name.localeCompare(b.name));
+
         searchResultsDropdown.innerHTML = `
             ${pickerTabsHTML}
             <div class="search-picker-content">
@@ -937,6 +1016,11 @@ document.addEventListener('DOMContentLoaded', async () => {
              }
         });
 
+        // Sort results within each category
+        for (const category in filtered) {
+            filtered[category].sort((a,b) => a.name.localeCompare(b.name));
+        }
+
         let resultsHTML = '';
         let totalResults = 0;
         const categoryOrder = ['people', 'departments', 'positions', 'workplaces'];
@@ -961,17 +1045,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Helper to render a list of items for the dropdown
+    // Helper to render a list of items for the dropdown (use createAvatarElement)
     function renderSearchResultItems(items) {
-        return items.map(item => `
-            <div class="search-result-item" data-item-id="${item.id}">
-                 <span class="result-item-icon" data-type="${item.type}">
-                    ${item.type === 'person' && item.avatar ? `<img src="${item.avatar}" alt="" />` : getEntityIconSVG(item.type)}
-                 </span> 
-                 <span class="result-item-name">${item.name}</span>
-                 <span class="result-item-desc">${item.description || ''}</span>
-             </div>
-        `).join('');
+        return items.map(item => {
+             const avatarEl = createAvatarElement(item, 'result-item');
+             return `
+                 <div class="search-result-item" data-item-id="${item.id}">
+                      <span class="result-item-icon" data-type="${item.type}">
+                         ${avatarEl.innerHTML} 
+                      </span> 
+                      <span class="result-item-name">${item.name}</span>
+                      <span class="result-item-desc">${item.description || ''}</span>
+                  </div>
+             `;
+        }).join('');
     }
 
     // Updated helper to add listeners
@@ -1011,12 +1098,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
  
      function handleSearchFocus() {
-         // Show picker immediately on focus if input is empty
-         if (mainSearchInput && mainSearchInput.value.trim().length === 0) {
-             renderSearchDropdown(); // Will render picker and show
-         } else if (mainSearchInput && mainSearchInput.value.trim().length > 0) {
-             renderSearchDropdown(mainSearchInput.value.trim()); // Render results if text exists
-         }
+         // Always try to render dropdown on focus
+         const query = mainSearchInput.value.trim();
+         renderSearchDropdown(query);
      }
 
      // Update to use the item found in allSearchableItems directly
@@ -1365,29 +1449,32 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (selectionIndex === -1) return;
 
         const item = selections[selectionIndex];
+        if (item.type === 'person' || item.type === 'condition-block') return; // Don't convert persons or existing blocks
 
-        // Only convert non-person types
-        if (item.type === 'person') return;
+        console.log('Converting entity to condition block:', item);
 
-        // Remove from selections
-        selections.splice(selectionIndex, 1);
-
-        // Add to conditions (pre-filled)
-        const newCondition = {
-            id: nextConditionId++, // Ensure unique ID
-            field: item.type, // e.g., 'department'
-            operator: 'is', // Default operator
-            values: [item.originalName || item.name] // Use original name if available
+        // Transform the selection item
+        const originalType = item.type;
+        const originalName = item.name;
+        selections[selectionIndex] = {
+            ...item, // Keep original id, avatar etc.
+            type: 'condition-block', // Change type
+            isStandalone: false, // Mark as inline
+            originalType: originalType,
+            originalName: originalName,
+            rules: [
+                 { // Add the first rule based on the original entity
+                     id: `rule-${nextConditionId++}`,
+                     field: originalType, 
+                     operator: 'is', 
+                     values: [item.originalName || item.name]
+                 }
+            ]
         };
-        conditions.push(newCondition);
 
-        // Ensure conditions section is visible
-         if (conditionsSection) conditionsSection.style.display = 'block';
-
-        // Re-render both sections and filter table
-        renderSelectionsAndConditions(); // Will render the new condition block
+        // Re-render the selections area
+        renderSelectionsAndConditions(); 
         filterAndRenderTable();
-        console.log('Converted selection to condition:', newCondition);
     }
 
     // Modified handler to get ID from the block
@@ -1403,11 +1490,72 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log('Removed selection:', itemIdToRemove);
     }
 
+    // Handler for 3-dot menu option "Add people using conditions"
+    function handleAddStandaloneConditionBlock() {
+         const newBlockData = {
+             id: `cond-block-${nextConditionId++}`,
+             isStandalone: true,
+             rules: [
+                 { // Add one default rule
+                     id: `rule-${nextConditionId++}`,
+                     field: conditionFieldOptions[0].value,
+                     operator: conditionOperatorOptions.string[0].value,
+                     values: []
+                 }
+             ]
+         };
+         conditions.push(newBlockData);
+         renderSelectionsAndConditions(); // Re-render the main area
+         filterAndRenderTable(); 
+     }
+
+    // Handler for adding rule to standalone block
+    function handleAddRuleToStandaloneBlock(blockId) {
+         const blockIndex = conditions.findIndex(b => b.id === blockId && b.isStandalone);
+         if (blockIndex > -1) {
+             conditions[blockIndex].rules.push({ /* new rule data */ });
+             renderStandaloneConditionBlock(conditions[blockIndex]); // Re-render only this block
+             filterAndRenderTable();
+         }
+     }
+     
+    // Handler for adding rule to inline block
+    function handleAddRuleToInlineBlock(blockId) {
+         const blockIndex = selections.findIndex(b => b.id === blockId && b.type === 'condition-block');
+          if (blockIndex > -1) {
+              selections[blockIndex].rules.push({ /* new rule data */ });
+              renderInlineConditionBlock(selections[blockIndex]); // Re-render only this block
+              filterAndRenderTable();
+          }
+    }
+
+    // Handler for removing standalone block
+    function handleRemoveStandaloneConditionBlock(blockId) {
+         conditions = conditions.filter(b => !(b.id === blockId && b.isStandalone));
+         renderSelectionsAndConditions();
+         filterAndRenderTable();
+     }
+
+    // Handlers for updating/removing specific rules within blocks
+    function updateRule(blockId, ruleId, key, value) {
+         // Find block (in selections or conditions array)
+         // Find rule within block
+         // Update rule property
+         // Re-render block (standalone or inline)
+         // Filter table
+    }
+    function removeRule(blockId, ruleId) {
+         // Find block
+         // Remove rule from block.rules
+         // If rules array becomes empty, maybe revert inline block back to entity?
+         // Re-render block
+         // Filter table
+    }
+
     // --- INITIALIZATION --- 
     await loadData();
-    renderSelectionsAndConditions(); // Render selections/conditions area (initially empty)
-    renderExclusions(); // Render exclusions area (initially empty)
-    // The initial call to filterAndRenderTable should now correctly handle the empty state
+    renderSelectionsAndConditions(); 
+    renderExclusions(); 
     filterAndRenderTable(); 
 
     // --- EVENT LISTENERS --- 
