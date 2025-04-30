@@ -12,19 +12,22 @@
     <div class="app-container">
         <aside class="sidebar">
             <div class="sidebar-header">
-                <div class="brand-logo">K</div>
-                <span class="brand-name">Kolhorn</span>
-                <button class="sidebar-toggle-btn">
-                    <!-- Hamburger Icon SVG or similar -->
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M4 4h12v2H4V4zm0 5h12v2H4V9zm0 5h12v2H4v-2z" /></svg>
+                <div class="brand-logo">PS</div>
+                <span class="brand-name">People Selector</span>
+                <button class="sidebar-toggle-btn" aria-label="Toggle sidebar">
+                    <!-- Placeholder for icon -->
                 </button>
             </div>
             <nav class="sidebar-nav">
                 <ul class="sidebar-menu">
-                    <li class="sidebar-item">
+                    <li class="sidebar-item active">
                         <button>
-                            <span class="sidebar-item-icon"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" /></svg></span>
-                            <span class="sidebar-item-label">Home</span>
+                            <span class="sidebar-item-icon">
+                                <!-- Placeholder for icon -->
+                                <svg fill="currentColor" viewBox="0 0 20 20"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"></path></svg>
+                            </span>
+                            <span class="sidebar-item-label">Recipients</span>
+                            <span class="sidebar-item-badge">14</span>
                         </button>
                     </li>
                     <li class="sidebar-item">
@@ -41,7 +44,7 @@
                         </button>
                     </li>
                     <li class="sidebar-item">
-                        <button>
+                         <button>
                             <span class="sidebar-item-icon"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" /></svg></span>
                             <span class="sidebar-item-label">Search</span>
                          </button>
@@ -130,7 +133,7 @@
                              <span class="sidebar-item-label">Imports</span>
                          </button>
                     </li>
-                    <li class="sidebar-item active">
+                    <li class="sidebar-item">
                          <button>
                              <span class="sidebar-item-icon"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" /></svg></span>
                              <span class="sidebar-item-label">Settings</span>
@@ -153,7 +156,7 @@
         </aside>
         <main class="main-content">
             <div class="content-scrollable-area">
-                 <div class="page-title">Select people</div> 
+                 <div class="page-title">Select recipients</div> 
                  
                  <div class="people-selector-container"> 
                      <div class="main-content-area">
@@ -163,7 +166,20 @@
                                 <div class="search-title">Select members</div>
                                 <div class="search-subtitle">All selected items will be included in the group and automatically updated</div>
                              </div>
-                             <button id="search-menu-btn" class="menu-btn">...</button> <!-- 3-dot menu -->
+                             <div class="search-menu-wrapper">
+                                <button id="search-menu-btn" class="menu-btn" aria-label="Options menu">
+                                    <!-- Placeholder for 3-dot icon -->
+                                    &vellip;
+                                </button>
+                                <div id="search-options-dropdown" class="search-options-dropdown" style="display: none;">
+                                    <button data-action="add-condition">
+                                        <span class="menu-icon"><!-- Add Icon --></span> Add advanced condition
+                                    </button>
+                                     <button data-action="delete-all">
+                                        <span class="menu-icon"><!-- Delete Icon --></span> Delete all members
+                                     </button>
+                                 </div>
+                             </div>
                          </div>
 
                          <div class="search-selections-section">
