@@ -205,16 +205,22 @@
                         </div>
     
                          <div class="exclusions-section" id="exclusions-section">
-                            <div class="exclusion-search-wrapper">
-                                <span class="search-icon">🔍</span> <!-- Placeholder Icon -->
+                            <!-- **NEW**: Exclusions Header -->
+                            <div class="search-header"> <!-- Reuse class for styling -->
+                                <div>
+                                   <div class="search-title">Exclusions</div> <!-- New Title -->
+                                   <div class="search-subtitle">Choose people or conditions who will be excluded from the above selection.</div> <!-- New Subtitle -->
+                                </div>
+                                <!-- No menu button needed here -->
+                            </div>
+                            <!-- Existing Exclusion Search Wrapper -->
+                            <div class="exclusion-search-wrapper" id="exclusion-search-wrapper"> <!-- Ensure ID is on wrapper -->
+                                <span class="search-icon"><!-- SVG injected by JS --></span> 
                                 <input type="text" placeholder="Select people to exclude" id="exclusion-search"/>
                                 <div id="exclusion-results-dropdown" class="search-results-dropdown" style="display: none;">
                                     <!-- Exclusion search results populated by JS -->
                                 </div>
-                                <!-- Tokens will be added here dynamically by JS later -->
-                            </div>
-                            <div id="excluded-items-list" class="excluded-items-wrapper" style="display:none;"> 
-                                <!-- Area for token display if not inside input -->
+                                <!-- Tokens will be added here dynamically by JS -->
                             </div>
                          </div>
     
@@ -247,10 +253,9 @@
                      <div class="member-list-area">
                          <!-- Right Column Content: Tabs + Table -->
                          <div class="tabs-section">
-                             <button class="tab-button active" data-tab="members">Members</button>
-                             <button class="tab-button" data-tab="excluded">Excluded</button>
-                             <button class="tab-button" data-tab="all">All</button>
-                             <span id="member-count-display" class="member-count-display"></span>
+                             <button class="tab-button active" data-tab="members">Members <span class="tab-count"></span></button>
+                             <button class="tab-button" data-tab="excluded">Excluded <span class="tab-count"></span></button>
+                             <button class="tab-button" data-tab="all">All <span class="tab-count"></span></button>
                          </div>
     
                          <div class="member-table-section" id="member-table-section">
@@ -279,12 +284,12 @@
                          
                      </div>
                 </div> 
-                 
-                 <!-- Footer Buttons -->
-                 <div class="page-footer">
-                     <button class="btn btn-secondary">Cancel</button>
-                     <button class="btn btn-primary">Save</button>
-                 </div>
+            </div> <!-- End content-scrollable-area -->
+            
+            <!-- Footer Buttons (Now a direct child of main-content) -->
+            <div class="page-footer">
+                <button class="btn btn-secondary">Cancel</button>
+                <button class="btn btn-primary">Save</button>
             </div>
         </main>
     </div>
